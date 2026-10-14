@@ -1,0 +1,32 @@
+{
+  "name": "luxeresin-backend",
+  "version": "1.0.0",
+  "description": "Enterprise Grade MERN Backend for LuxeResin",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js"
+  },
+  "keywords": [
+    "resin-art",
+    "ecommerce",
+    "mern"
+  ],
+  "author": "Vimal Kumar Chaudhary",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.7",
+    "express": "^5.3.0",
+    "helmet": "^8.3.0",
+    "joi": "^18.2.9",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.11.1",
+    "morgan": "^1.12.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
