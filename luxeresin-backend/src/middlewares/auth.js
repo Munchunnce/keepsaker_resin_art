@@ -3,25 +3,31 @@ import JwtService from "../services/JwtService.js";
 
 const auth = async (req, res, next) => {
     let authHeader = req.headers.authorization;
-    if (!authHeader) {
-        return next(CustomErrorHandler.unAuthorized());
+    
+    // 1. Edge Case Check: Header hona chahiye aur "Bearer " se start hona chahiye
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return next(CustomErrorHandler.unAuthorized('Authorization header missing or invalid format'));
     }
 
+    // 2. Token Extract karna
     const token = authHeader.split(' ')[1];
 
+    // 3. Edge Case Check: Space ke baad actual token hona chahiye (khali nahi)
+    if (!token) {
+        return next(CustomErrorHandler.unAuthorized('Token not found'));
+    }
+
     try {
-        const { _id, role } = await JwtService.verify(token);
-        // req.user = { _id, role };
-        // next();
-        const user = {
-            _id,
-            role
-        };
+        // 4. Token Verify karna
+        const { _id, role } = await JwtService.verify(token); // JWT_SECRET internally use ho raha hoga
         
-        req.user = user;
+        // 5. req object mein inject karna (ES6 shorthand - clean and professional)
+        req.user = { _id, role };
+        
         next();
     } catch (err) {
-        return next(CustomErrorHandler.unAuthorized());
+        // Token expire ho gaya ya galat hai
+        return next(CustomErrorHandler.unAuthorized('Invalid or expired token'));
     }
 }
 
