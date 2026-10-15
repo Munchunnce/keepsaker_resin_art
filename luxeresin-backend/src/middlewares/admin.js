@@ -3,7 +3,7 @@ import CustomErrorHandler from '../services/CustomErrorHandler.js';
 
 const admin = async (req, res, next) => {
     try {
-        // req.user._id humein auth.js middleware se milega (isliye admin hamesha auth ke baad lagega)
+        // req.user._id humein auth.js middleware se milega
         const user = await User.findOne({ _id: req.user._id });
         
         if (user && user.role === 'Admin') {
