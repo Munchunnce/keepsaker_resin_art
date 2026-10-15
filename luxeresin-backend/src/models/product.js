@@ -1,12 +1,12 @@
 import mongoose from 'mongoose';
 
-// 1. Chhota Schema: Size aur uske hisaab se price badhana (e.g. 14-inch par +₹500)
+// 1. Chhota Schema: Size aur uske hisaab se price badhana
 const sizeSchema = new mongoose.Schema({
     sizeLabel: { type: String, required: true }, 
     priceModifier: { type: Number, required: true, default: 0 } 
-}, { _id: false }); // _id false kiya taaki har size ki alag ID na bane
+}, { _id: false });
 
-// 2. Chhota Schema: Add-ons aur unka extra charge (e.g. LED Light +₹300)
+// 2. Chhota Schema: Add-ons aur unka extra charge
 const addonSchema = new mongoose.Schema({
     addonName: { type: String, required: true }, 
     extraPrice: { type: Number, required: true, default: 0 } 
@@ -30,35 +30,58 @@ const productSchema = new mongoose.Schema(
             type: String,
             required: [true, 'Product description is required'],
         },
-        // IMPORTANT: Yeh line is Product ko aapki banayi hui Category se jode gi
         category: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Category', 
             required: true,
         },
+        
+        // --- PRICING & OFFERS ---
         basePrice: {
             type: Number,
             required: [true, 'Base price is required'],
         },
+        discountPrice: {
+            type: Number,
+            default: 0, // Agar 0 hai, matlab koi offer nahi hai
+        },
+        discountPercentage: {
+            type: Number,
+            default: 0, // e.g., 20 means 20% off
+        },
+
         images: {
-            type: [String], // Array of Strings: Ek product ki multiple photos ho sakti hain
+            type: [String],
             required: true,
         },
         
         // --- CUSTOMIZATION MATRIX ---
-        colors: { type: [String], default: [] }, // Available colors
-        sizes: [sizeSchema], // Size options based on the sub-schema above
-        addons: [addonSchema], // Extra add-ons based on the sub-schema above
+        colors: { type: [String], default: [] },
+        sizes: [sizeSchema], 
+        addons: [addonSchema], 
 
         // --- INVENTORY & TIMING ---
         leadTimeDays: { 
             type: Number, 
-            default: 5, // Resin art banane aur sookhne mein time lagta hai (e.g., 5 days dispatch time)
+            default: 5, 
         },
         inStock: {
             type: Boolean,
             default: true,
         },
+
+        // --- RATINGS & REVIEWS SUMMARY ---
+        averageRating: {
+            type: Number,
+            default: 0, // Shuru mein rating 0 hogi
+            min: 0,
+            max: 5
+        },
+        totalReviews: {
+            type: Number,
+            default: 0, // Shuru mein 0 reviews honge
+        },
+
         isActive: {
             type: Boolean,
             default: true,

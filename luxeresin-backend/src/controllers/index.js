@@ -6,3 +6,6 @@ export { default as refreshController } from './auth/refreshController.js';
 
 // --- Category Controllers ---
 export { default as categoryController } from './category/categoryController.js';
+
+// --- Product Controllers ---
+export { default as productController } from './product/productController.js';
