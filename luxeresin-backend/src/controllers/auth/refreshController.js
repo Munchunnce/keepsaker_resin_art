@@ -1,67 +1,79 @@
-import Joi from 'joi';
 import { RefreshToken, User } from '../../models/index.js';
 import CustomErrorHandler from '../../services/CustomErrorHandler.js';
 import JwtService from '../../services/JwtService.js';
-import { REFRESH_SECRET } from '../../config/index.js';
+import { REFRESH_SECRET, NODE_ENV } from '../../config/index.js';
 
 const refreshController = {
   async refresh(req, res, next) {
-    // 1. Validate request body
-    const refreshSchema = Joi.object({
-      refresh_token: Joi.string().required(),
-    });
-
-    const { error, value } = refreshSchema.validate(req.body);
-
-    if (error) {
-      return next(error);
-    }
-
-    // 2. Database
-    let refreshToken;
     try {
-        refreshToken = await RefreshToken.findOne({ token: value.refresh_token });
-        if(!refreshToken) {
+        // 1. Get refresh token from Cookie (No Joi validation needed)
+        const currentRefreshToken = req.cookies?.refreshToken;
+
+        if (!currentRefreshToken) {
+            return next(CustomErrorHandler.unAuthorized('Refresh token missing'));
+        }
+
+        // 2. Check if token exists in Database
+        const tokenInDb = await RefreshToken.findOne({ token: currentRefreshToken });
+        if (!tokenInDb) {
             return next(CustomErrorHandler.unAuthorized('Invalid refresh token'));
         }
 
+        // 3. Verify JWT Signature
         let userId;
         try {
-            const { _id, role } = await JwtService.verify(refreshToken.token, REFRESH_SECRET);
+            const { _id } = await JwtService.verify(tokenInDb.token, REFRESH_SECRET);
             userId = _id;
         } catch (err) {
-            return next(CustomErrorHandler.unAuthorized('Invalid refresh token'));
+            return next(CustomErrorHandler.unAuthorized('Refresh token expired or invalid'));
         }
 
-        const user = await User.findOne({ _id: userId});
-        if(!user){
-            return next(CustomErrorHandler.unAuthorized('No user found'));
+        // 4. Check if User still exists in DB
+        const user = await User.findOne({ _id: userId });
+        if (!user) {
+            return next(CustomErrorHandler.unAuthorized('User no longer exists'));
         }
 
-        // . Generate JWT token
-            const access_token = JwtService.sign({
-                _id: user._id,
-                role: user.role,
-            });
+        // 5. TOKEN ROTATION (Pro-Fix: Delete the old token immediately)
+        await RefreshToken.deleteOne({ token: currentRefreshToken });
 
-            // refresh token generation
-            // Refresh token
-            const refresh_token = JwtService.sign({ _id: user._id, role: user.role, }, REFRESH_SECRET, '7d');
-            
-            //Database whitelist for refresh token
-            await RefreshToken.create({ token: refresh_token });
+        // 6. Generate New Tokens
+        const access_token = JwtService.sign({
+            _id: user._id,
+            role: user.role,
+        });
 
-            // . Return response
-            return res.status(200).json({
-                message: 'Login successful',
-                access_token,
-                refresh_token
-            });
+        const refresh_token = JwtService.sign(
+            { _id: user._id, role: user.role }, 
+            REFRESH_SECRET, 
+            '7d'
+        );
+        
+        // 7. Whitelist new refresh token in DB (with userId)
+        await RefreshToken.create({ 
+            token: refresh_token,
+            userId: user._id 
+        });
+
+        // 8. Set New HttpOnly Cookie
+        res.cookie('refreshToken', refresh_token, {
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            httpOnly: true,
+            secure: NODE_ENV === 'production',
+            sameSite: 'strict',
+        });
+
+        // 9. Return ONLY access_token to frontend
+        return res.status(200).json({
+            success: true,
+            message: 'Token refreshed successfully',
+            access_token,
+        });
+
     } catch (err) {
-        return next(new Error('Something went wrong in the database' + err.message));
+        return next(new Error('Something went wrong during token refresh: ' + err.message));
     }
   },
 };
-
 
 export default refreshController;
