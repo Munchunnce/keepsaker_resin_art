@@ -6,7 +6,7 @@ const admin = async (req, res, next) => {
         // req.user._id humein auth.js middleware se milega
         const user = await User.findOne({ _id: req.user._id });
         
-        if (user && user.role === 'Admin') {
+        if (user && user.role.toLowerCase() === 'admin') {
             next(); // User admin hai, request ko aage Controller ke paas jaane do
         } else {
             return next(CustomErrorHandler.unAuthorized('Access denied! Admin privileges required.'));
