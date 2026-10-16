@@ -2,6 +2,7 @@ import express from "express";
 import { loginController, registerController, userController, refreshController, categoryController, productController, cartController, orderController } from "../controllers/index.js";
 import auth from "../middlewares/auth.js";
 import admin from "../middlewares/admin.js";
+import reviewController from "../controllers/product/reviewController.js";
 
 const router = express.Router();
 
@@ -44,6 +45,10 @@ router.post('/order/checkout', auth, orderController.placeOrder);
 router.get('/order/my-orders', auth, orderController.myOrders);           // Sirf Auth (Customer)
 router.get('/order/all', auth, admin, orderController.allOrders);         // Auth + Admin
 router.put('/order/:id/status', auth, admin, orderController.updateStatus); // Auth + Admin
+
+// --- Review Routes ---
+router.post('/product/review', auth, reviewController.addReview);
+router.get('/product/:productId/reviews', reviewController.getProductReviews); // Public: Koi bhi reviews padh sakta hai
 
 
 export default router;
