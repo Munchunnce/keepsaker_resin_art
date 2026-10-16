@@ -30,6 +30,15 @@ const userSchema = new mongoose.Schema(
       enum: ['Customer', 'Admin'],
       default: 'Customer',
     },
+    // --- FIELD: Saved Address add ---
+    address: {
+        fullName: { type: String, trim: true },
+        phone: { type: String, match: /^[0-9]{10}$/ },
+        pincode: { type: String, match: /^[0-9]{6}$/ },
+        streetAddress: { type: String },
+        city: { type: String },
+        state: { type: String }
+    }
   },
   {
     timestamps: true, // Automatically createdAt aur updatedAt manage karega
