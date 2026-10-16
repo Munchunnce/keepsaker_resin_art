@@ -111,6 +111,85 @@ const orderController = {
         } catch (err) {
             return next(err);
         }
+    },
+    // 2. GET MY ORDERS (Customer ke liye)
+    async myOrders(req, res, next) {
+        try {
+            // Sirf wahi orders dikhao jiski user ID login wale token se match ho. Naye orders upar dikhenge (-1)
+            const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
+            
+            return res.status(200).json({
+                success: true,
+                message: 'Your order history fetched',
+                data: orders
+            });
+        } catch (err) {
+            return next(err);
+        }
+    },
+
+    // 3. GET ALL ORDERS (Admin Control Room)
+    async allOrders(req, res, next) {
+        try {
+            // Admin ke pas hazaron orders aayenge, isliye Pagination zaroori hai
+            let { page = 1, limit = 10 } = req.query;
+            const skip = (Number(page) - 1) * Number(limit);
+
+            const [orders, totalOrders] = await Promise.all([
+                Order.find()
+                    .populate('user', 'name email') // FAANG Magic: Admin ko Customer ka naam aur email bhi dikhega!
+                    .sort({ createdAt: -1 })
+                    .skip(skip)
+                    .limit(Number(limit)),
+                Order.countDocuments()
+            ]);
+
+            return res.status(200).json({
+                success: true,
+                message: 'All orders fetched for admin',
+                data: orders,
+                meta: {
+                    totalOrders,
+                    currentPage: Number(page),
+                    totalPages: Math.ceil(totalOrders / Number(limit)),
+                    limit: Number(limit)
+                }
+            });
+        } catch (err) {
+            return next(err);
+        }
+    },
+
+    // 4. UPDATE ORDER STATUS (Admin Action)
+    async updateStatus(req, res, next) {
+        try {
+            const { id } = req.params;
+
+            // Strict Validation: Admin galti se spelling mistake na kar de!
+            const statusSchema = Joi.object({
+                orderStatus: Joi.string().valid('PLACED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'),
+                paymentStatus: Joi.string().valid('PENDING', 'COMPLETED', 'FAILED', 'REFUNDED')
+            });
+
+            const { error, value } = statusSchema.validate(req.body);
+            if (error) return next(error);
+
+            // Update karo aur naya data return karo
+            const updatedOrder = await Order.findByIdAndUpdate(id, value, { new: true })
+                                            .populate('user', 'name email');
+
+            if (!updatedOrder) {
+                return next(CustomErrorHandler.notFound('Order not found!'));
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: `Order status successfully updated to ${updatedOrder.orderStatus}`,
+                data: updatedOrder
+            });
+        } catch (err) {
+            return next(err);
+        }
     }
 };
 

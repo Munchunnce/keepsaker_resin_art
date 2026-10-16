@@ -40,6 +40,9 @@ router.put('/cart/items/:itemId', auth, cartController.updateQuantity); // Incre
 router.delete('/cart/items/:itemId', auth, cartController.removeItem); // Remove item
 // --- Order Routes ---
 router.post('/order/checkout', auth, orderController.placeOrder);
+router.get('/order/my-orders', auth, orderController.myOrders);           // Sirf Auth (Customer)
+router.get('/order/all', auth, admin, orderController.allOrders);         // Auth + Admin
+router.put('/order/:id/status', auth, admin, orderController.updateStatus); // Auth + Admin
 
 
 export default router;
