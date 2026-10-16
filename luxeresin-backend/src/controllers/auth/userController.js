@@ -22,6 +22,43 @@ const userController = {
         } catch (err) {
             return next(CustomErrorHandler.internal('Error fetching user profile'));
         }
+    },
+    // 2. UPDATE ADDRESS (New Advanced Logic)
+    async updateAddress(req, res, next) {
+        // Strict Validation
+        const addressSchema = Joi.object({
+            fullName: Joi.string().trim().required(),
+            phone: Joi.string().regex(/^[0-9]{10}$/).required(),
+            pincode: Joi.string().regex(/^[0-9]{6}$/).required(),
+            streetAddress: Joi.string().required(),
+            city: Joi.string().required(),
+            state: Joi.string().required()
+        });
+
+        const { error, value } = addressSchema.validate(req.body);
+        if (error) return next(error);
+
+        try {
+            // Find User and Update only the address field
+            const updatedUser = await User.findByIdAndUpdate(
+                req.user._id,
+                { address: value },
+                { new: true } // Return updated user
+            ).select('-password_hash -updatedAt -__v'); // Yahan bhi humne password_hash hide kar diya!
+
+            if (!updatedUser) {
+                return next(CustomErrorHandler.notFound('User not found'));
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: 'Address saved successfully for future checkouts!',
+                data: updatedUser
+            });
+
+        } catch (err) {
+            return next(err);
+        }
     }
 }
 
