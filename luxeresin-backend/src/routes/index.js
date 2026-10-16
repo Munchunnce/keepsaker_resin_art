@@ -25,4 +25,10 @@ router.get('/products', productController.index);
 
 // GET SINGLE: URL mein jo ":slug" hai wo parameter ban jayega
 router.get('/products/:slug', productController.show);
+
+// PUT: Update Product (Admin only) - URL mein ID bhejna hoga
+router.put('/products/:id', auth, admin, productController.update);
+
+// DELETE: Delete Product (Admin only) - URL mein ID bhejna hoga
+router.delete('/products/:id', auth, admin, productController.destroy);
 export default router;

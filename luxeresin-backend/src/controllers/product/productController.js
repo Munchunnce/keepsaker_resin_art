@@ -172,6 +172,76 @@ const productController = {
         } catch (err) {
             return next(err);
         }
+    },
+    // 4. UPDATE PRODUCT (Admin Only)
+    async update(req, res, next) {
+        try {
+            const { id } = req.params;
+
+            // Update ke liye validation (Saare fields optional hain kyunki zaroori nahi admin sab kuch update kare)
+            const updateSchema = Joi.object({
+                name: Joi.string().trim().max(100),
+                description: Joi.string(),
+                category: Joi.string().regex(/^[0-9a-fA-F]{24}$/),
+                basePrice: Joi.number().min(1),
+                discountPrice: Joi.number().min(0),
+                discountPercentage: Joi.number().min(0).max(100),
+                colors: Joi.array().items(Joi.string().trim()),
+                sizes: Joi.array().items(Joi.object({
+                    sizeLabel: Joi.string().required(),
+                    priceModifier: Joi.number().min(0).default(0)
+                })),
+                addons: Joi.array().items(Joi.object({
+                    addonName: Joi.string().required(),
+                    extraPrice: Joi.number().min(0).default(0)
+                })),
+                leadTimeDays: Joi.number().min(1).max(30),
+                inStock: Joi.boolean(),
+                isActive: Joi.boolean()
+            });
+
+            const { error, value } = updateSchema.validate(req.body);
+            if (error) return next(error);
+
+            // Product dhoondho aur update karo (new: true return karta hai updated data)
+            const updatedProduct = await Product.findByIdAndUpdate(id, value, { new: true });
+
+            if (!updatedProduct) {
+                return next(CustomErrorHandler.notFound('Product not found!'));
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: 'Product updated successfully',
+                data: updatedProduct
+            });
+
+        } catch (err) {
+            return next(err);
+        }
+    },
+    // 5. DELETE PRODUCT (Admin Only)
+    async destroy(req, res, next) {
+        try {
+            const { id } = req.params;
+
+            // ⚠️ Pro Tip: Real E-commerce mein products hamesha ke liye delete nahi karte (Soft Delete).
+            // Hum Product ko permanently udane ki jagah bas findOneAndDelete use kar rahe hain.
+            const product = await Product.findByIdAndDelete(id);
+
+            if (!product) {
+                return next(CustomErrorHandler.notFound('Product not found!'));
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: 'Product deleted successfully',
+                data: product
+            });
+
+        } catch (err) {
+            return next(err);
+        }
     }
 };
 
