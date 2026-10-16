@@ -9,3 +9,6 @@ export { default as categoryController } from './category/categoryController.js'
 
 // --- Product Controllers ---
 export { default as productController } from './product/productController.js';
+
+// --- Cart Controllers ---
+export { default as cartController } from './cart/cartController.js';

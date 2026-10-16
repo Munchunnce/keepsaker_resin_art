@@ -1,5 +1,5 @@
 import express from "express";
-import { loginController, registerController, userController, refreshController, categoryController, productController } from "../controllers/index.js";
+import { loginController, registerController, userController, refreshController, categoryController, productController, cartController } from "../controllers/index.js";
 import auth from "../middlewares/auth.js";
 import admin from "../middlewares/admin.js";
 
@@ -31,4 +31,8 @@ router.put('/products/:id', auth, admin, productController.update);
 
 // DELETE: Delete Product (Admin only) - URL mein ID bhejna hoga
 router.delete('/products/:id', auth, admin, productController.destroy);
+
+// --- Cart Routes ---
+// POST: Customer cart mein item add karega (auth guard zaroori hai)
+router.post('/cart', auth, cartController.addItem);
 export default router;
