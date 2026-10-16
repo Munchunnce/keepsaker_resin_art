@@ -145,6 +145,33 @@ const productController = {
         } catch (err) {
             return next(err);
         }
+    },
+    // 3. GET SINGLE PRODUCT (By Slug for SEO)
+    async show(req, res, next) {
+        try {
+            // URL se slug nikalna (e.g., radhe-krishna-3d-geode-frame-47a2)
+            const { slug } = req.params;
+
+            // Product dhoondhna jo active ho aur us slug se match kare
+            const product = await Product.findOne({ slug, isActive: true })
+                .populate('category', 'name slug')
+                .select('-__v');
+
+            // Agar koi galat link daal de ya product delete/inactive ho gaya ho
+            if (!product) {
+                return next(CustomErrorHandler.notFound('Product not found or currently unavailable!'));
+            }
+
+            // Success Response
+            return res.status(200).json({
+                success: true,
+                message: 'Product details fetched successfully',
+                data: product
+            });
+
+        } catch (err) {
+            return next(err);
+        }
     }
 };
 

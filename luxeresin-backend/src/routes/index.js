@@ -23,4 +23,6 @@ router.post('/products', auth, admin, productController.store);
 // GET: Koi bhi visitor products dekh sakta hai (No auth guard)
 router.get('/products', productController.index);
 
+// GET SINGLE: URL mein jo ":slug" hai wo parameter ban jayega
+router.get('/products/:slug', productController.show);
 export default router;
