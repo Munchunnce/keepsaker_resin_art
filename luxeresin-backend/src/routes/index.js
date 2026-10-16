@@ -35,4 +35,7 @@ router.delete('/products/:id', auth, admin, productController.destroy);
 // --- Cart Routes ---
 // POST: Customer cart mein item add karega (auth guard zaroori hai)
 router.post('/cart', auth, cartController.addItem);
+router.get('/cart', auth, cartController.getCart);                  // View cart
+router.put('/cart/items/:itemId', auth, cartController.updateQuantity); // Increase/Decrease Qty
+router.delete('/cart/items/:itemId', auth, cartController.removeItem); // Remove item
 export default router;

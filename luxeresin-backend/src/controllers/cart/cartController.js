@@ -94,6 +94,87 @@ const cartController = {
         } catch (err) {
             return next(err);
         }
+    },
+    // 2. GET CART (Secure Read)
+    async getCart(req, res, next) {
+        try {
+            // Hacker proof: Hamesha Token se User ID nikalo, body/URL se nahi!
+            const cart = await Cart.findOne({ user: req.user._id }).populate({
+                path: 'items.product',
+                select: 'name images basePrice discountPrice slug inStock isActive'
+            });
+
+            // Agar cart nahi hai, toh error mat do, bas khali array bhej do
+            if (!cart) {
+                return res.status(200).json({ success: true, data: { items: [] } });
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: 'Cart fetched successfully',
+                data: cart
+            });
+        } catch (err) {
+            return next(err);
+        }
+    },
+
+    // 3. UPDATE QUANTITY (Anti-Negative Hack)
+    async updateQuantity(req, res, next) {
+        try {
+            const { itemId } = req.params;
+            const { action } = req.body; // Sirf 'increase' ya 'decrease' allow karenge
+
+            const cart = await Cart.findOne({ user: req.user._id });
+            if (!cart) return next(CustomErrorHandler.notFound('Cart not found'));
+
+            // Find exactly which item the user wants to update
+            const itemIndex = cart.items.findIndex(i => i._id.toString() === itemId);
+            if (itemIndex === -1) return next(CustomErrorHandler.notFound('Item not found in cart'));
+
+            // Safe Math Logic
+            if (action === 'increase') {
+                cart.items[itemIndex].quantity += 1;
+            } else if (action === 'decrease') {
+                if (cart.items[itemIndex].quantity > 1) {
+                    cart.items[itemIndex].quantity -= 1;
+                } else {
+                    // Agar quantity 1 hai aur user minus dabaye, toh item delete kar do!
+                    cart.items.splice(itemIndex, 1);
+                }
+            } else {
+                return res.status(400).json({ success: false, message: 'Invalid action. Use increase or decrease.' });
+            }
+
+            const savedCart = await cart.save();
+            const populatedCart = await Cart.findById(savedCart._id).populate('items.product', 'name images basePrice discountPrice slug');
+            
+            return res.status(200).json({ success: true, message: 'Cart updated', data: populatedCart });
+        } catch (err) {
+            return next(err);
+        }
+    },
+
+    // 4. REMOVE ITEM COMPLETELY (Atomic $pull)
+    async removeItem(req, res, next) {
+        try {
+            const { itemId } = req.params;
+
+            // $pull ek MongoDB operator hai jo bina kisi race condition ke item ko safe tarike se nikal deta hai
+            const cart = await Cart.findOneAndUpdate(
+                { user: req.user._id },
+                { $pull: { items: { _id: itemId } } },
+                { new: true } // Update hone ke baad naya cart return karo
+            ).populate('items.product', 'name images basePrice discountPrice slug');
+
+            return res.status(200).json({
+                success: true,
+                message: 'Item removed from cart',
+                data: cart
+            });
+        } catch (err) {
+            return next(err);
+        }
     }
 };
 
