@@ -1,3 +1,4 @@
+import Joi from "joi";
 import { User } from "../../models/index.js";
 import CustomErrorHandler from "../../services/CustomErrorHandler.js";
 
