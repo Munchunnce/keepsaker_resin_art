@@ -12,3 +12,6 @@ export { default as productController } from './product/productController.js';
 
 // --- Cart Controllers ---
 export { default as cartController } from './cart/cartController.js';
+
+// --- Order Controllers ---
+export { default as orderController } from './order/orderController.js';

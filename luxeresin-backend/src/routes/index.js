@@ -1,5 +1,5 @@
 import express from "express";
-import { loginController, registerController, userController, refreshController, categoryController, productController, cartController } from "../controllers/index.js";
+import { loginController, registerController, userController, refreshController, categoryController, productController, cartController, orderController } from "../controllers/index.js";
 import auth from "../middlewares/auth.js";
 import admin from "../middlewares/admin.js";
 
@@ -38,4 +38,8 @@ router.post('/cart', auth, cartController.addItem);
 router.get('/cart', auth, cartController.getCart);                  // View cart
 router.put('/cart/items/:itemId', auth, cartController.updateQuantity); // Increase/Decrease Qty
 router.delete('/cart/items/:itemId', auth, cartController.removeItem); // Remove item
+// --- Order Routes ---
+router.post('/order/checkout', auth, orderController.placeOrder);
+
+
 export default router;
