@@ -82,6 +82,69 @@ const productController = {
             // 6. Failsafe Error Catching (DB timeout, etc.)
             return next(err);
         }
+    },
+    // --- GET ALL PRODUCTS (The World-Class Masterpiece) ---
+    async index(req, res, next) {
+        try {
+            // 1. URL se queries nikalna (with default values for pagination)
+            let { page = 1, limit = 12, search, category, sort, minPrice, maxPrice } = req.query;
+
+            // 2. Dynamic Query Engine
+            let filter = { isActive: true }; // SECURITY: Sirf Active products dikhao public ko!
+
+            // Text Search (Name mein search karna, case-insensitive)
+            if (search) {
+                filter.name = { $regex: search, $options: 'i' }; 
+            }
+
+            // Category Filter
+            if (category) {
+                filter.category = category;
+            }
+
+            // Price Range Filter (e.g. ₹500 se ₹2000 tak)
+            if (minPrice || maxPrice) {
+                filter.basePrice = {};
+                if (minPrice) filter.basePrice.$gte = Number(minPrice); // Greater than or equal
+                if (maxPrice) filter.basePrice.$lte = Number(maxPrice); // Less than or equal
+            }
+
+            // 3. Dynamic Sorting Engine
+            let sortOption = { createdAt: -1 }; // Default: Naye products pehle dikhao
+            if (sort === 'price_low') sortOption = { basePrice: 1 };
+            if (sort === 'price_high') sortOption = { basePrice: -1 };
+            if (sort === 'top_rated') sortOption = { averageRating: -1 };
+
+            // 4. Pagination Math
+            const skip = (Number(page) - 1) * Number(limit);
+
+            // 5. The Magic Execution (Parallel Processing for Ultra-Fast Response)
+            const [products, totalProducts] = await Promise.all([
+                Product.find(filter)
+                    .populate('category', 'name slug') // FAANG Trick: Category ka naam automatically le aao!
+                    .select('-__v') // Database ka kachra hide karo
+                    .sort(sortOption)
+                    .skip(skip)
+                    .limit(Number(limit)),
+                Product.countDocuments(filter) // Total products kitne hain (Pagination ke liye zaroori)
+            ]);
+
+            // 6. Pro-Level Response format for Frontend
+            return res.status(200).json({
+                success: true,
+                message: 'Products fetched successfully',
+                data: products,
+                meta: { // Metadata for Pagination UI
+                    totalProducts,
+                    currentPage: Number(page),
+                    totalPages: Math.ceil(totalProducts / Number(limit)),
+                    limit: Number(limit)
+                }
+            });
+
+        } catch (err) {
+            return next(err);
+        }
     }
 };
 

@@ -20,4 +20,7 @@ router.post('/categories', auth, admin, categoryController.store);
 // Pro-Level Security: Only Logged In (auth) AND Admin (admin) can create products
 router.post('/products', auth, admin, productController.store);
 
+// GET: Koi bhi visitor products dekh sakta hai (No auth guard)
+router.get('/products', productController.index);
+
 export default router;
