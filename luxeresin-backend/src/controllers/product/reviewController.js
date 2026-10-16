@@ -3,9 +3,8 @@ import CustomErrorHandler from '../../services/CustomErrorHandler.js';
 import Joi from 'joi';
 
 const reviewController = {
-    // 1. ADD / UPDATE REVIEW (Verified Purchase Logic)
+    // 1. ADD / UPDATE REVIEW
     async addReview(req, res, next) {
-        // Validation: Rating sirf 1-5, comment max 500 chars
         const reviewSchema = Joi.object({
             rating: Joi.number().min(1).max(5).required(),
             comment: Joi.string().max(500).required(),
@@ -16,10 +15,10 @@ const reviewController = {
         if (error) return next(error);
 
         try {
-            // PRO-LEVEL SECURITY CHECK: Kya user ne ye product kharida hai?
+            // PRO-LEVEL: Kya user ne ye product kharida hai aur order DELIVERED hai?
             const hasPurchased = await Order.findOne({
                 user: req.user._id,
-                orderStatus: 'DELIVERED', // Order ghar pahuchne ke baad hi review de sakta hai
+                orderStatus: 'DELIVERED', 
                 'orderItems.productId': value.productId
             });
 
@@ -27,16 +26,14 @@ const reviewController = {
                 return next(CustomErrorHandler.badRequest('You can only review products that have been delivered to you.'));
             }
 
-            // Check karo agar pehle se review diya hai toh update karo, warna naya banao
+            // Check karo agar pehle se review diya hai
             let review = await Review.findOne({ user: req.user._id, product: value.productId });
 
             if (review) {
-                // Update existing review
                 review.rating = value.rating;
                 review.comment = value.comment;
                 await review.save();
             } else {
-                // Naya review create karo
                 review = new Review({
                     user: req.user._id,
                     product: value.productId,
@@ -46,18 +43,17 @@ const reviewController = {
                 await review.save();
             }
 
-            // --- MATH TIME: Average Rating aur Total Reviews update karo ---
+            // --- MATH TIME: Average Rating update karo ---
             const allReviews = await Review.find({ product: value.productId });
-            const numOfReviews = allReviews.length;
+            const totalReviews = allReviews.length; // ✅ Yahan FIX kar diya hai
             
-            // Sabki ratings ka total karo, phir total reviews se divide karo (Average math)
             const totalRatingSum = allReviews.reduce((sum, item) => sum + item.rating, 0);
-            const averageRating = totalRatingSum / numOfReviews;
+            const averageRating = totalRatingSum / totalReviews;
 
-            // Product ko updated math ke sath save karo
+            // Product model update karo
             await Product.findByIdAndUpdate(value.productId, {
-                averageRating: Number(averageRating.toFixed(1)), // 4.5 jaisa format
-                numOfReviews
+                averageRating: Number(averageRating.toFixed(1)), 
+                totalReviews // ✅ Yahan FIX kar diya hai
             });
 
             return res.status(200).json({
@@ -75,7 +71,7 @@ const reviewController = {
     async getProductReviews(req, res, next) {
         try {
             const reviews = await Review.find({ product: req.params.productId })
-                .populate('user', 'full_name') // Customer ka naam dikhane ke liye
+                .populate('user', 'full_name') 
                 .sort({ createdAt: -1 });
 
             return res.status(200).json({
