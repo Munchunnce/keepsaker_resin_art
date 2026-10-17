@@ -3,6 +3,7 @@ import { loginController, registerController, userController, refreshController,
 import auth from "../middlewares/auth.js";
 import admin from "../middlewares/admin.js";
 import reviewController from "../controllers/product/reviewController.js";
+import dashboardController from "../controllers/admin/dashboardController.js";
 
 const router = express.Router();
 
@@ -13,6 +14,10 @@ router.get('/me', auth, userController.me);
 router.put('/user/address', auth, userController.updateAddress);
 router.post('/refresh', refreshController.refresh);
 router.post('/logout', auth, loginController.logout);
+
+
+// --- Admin Dashboard Route ---
+router.get('/admin/dashboard', [auth, admin], dashboardController.getDashboardStats);
 
 // --- Category Routes ---
 // PRO FIX: Pehle 'auth' check karega login hai ya nahi, phir 'admin' check karega wo Admin hai ya nahi
