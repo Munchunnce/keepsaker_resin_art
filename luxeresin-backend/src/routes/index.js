@@ -1,5 +1,5 @@
 import express from "express";
-import { loginController, registerController, userController, refreshController, categoryController, productController, cartController, orderController } from "../controllers/index.js";
+import { loginController, registerController, userController, refreshController, categoryController, productController, cartController, orderController, couponController } from "../controllers/index.js";
 import auth from "../middlewares/auth.js";
 import admin from "../middlewares/admin.js";
 import reviewController from "../controllers/product/reviewController.js";
@@ -50,5 +50,11 @@ router.put('/order/:id/status', auth, admin, orderController.updateStatus); // A
 router.post('/product/review', auth, reviewController.addReview);
 router.get('/product/:productId/reviews', reviewController.getProductReviews); // Public: Koi bhi reviews padh sakta hai
 
+// --- Coupon Routes ---
+// Admin Route: Naya coupon banane ke liye (admin middleware zaroori hai)
+router.post('/admin/coupon', [auth, admin], couponController.createCoupon);
+
+// Customer Route: Cart mein code apply karne ke liye
+router.post('/cart/apply-coupon', auth, couponController.applyCoupon);
 
 export default router;

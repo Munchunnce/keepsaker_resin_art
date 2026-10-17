@@ -15,3 +15,6 @@ export { default as cartController } from './cart/cartController.js';
 
 // --- Order Controllers ---
 export { default as orderController } from './order/orderController.js';
+
+// --- Coupon Controllers ---
+export { default as couponController } from './order/couponController.js';
