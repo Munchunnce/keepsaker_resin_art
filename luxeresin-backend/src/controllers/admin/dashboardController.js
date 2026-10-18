@@ -5,11 +5,11 @@ const dashboardController = {
     // 1. MASTER DASHBOARD STATS
     async getDashboardStats(req, res, next) {
         try {
-            // 📅 1. Date Range Setup (Is mahine ka data nikalne ke liye)
+            // 1. Date Range Setup (Is mahine ka data nikalne ke liye)
             const today = new Date();
             const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-            // 🚀 2. FAANG-Level Parallel Execution (Promise.all)
+            // 2. FAANG-Level Parallel Execution (Promise.all)
             // Saare complex queries ek sath fire karenge taaki API super fast ho!
             const [
                 totalUsers,
