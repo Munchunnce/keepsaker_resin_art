@@ -1,40 +1,54 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import axiosInstance, { clearAccessToken } from '../../services/axiosInstance'; // Clear function import kiya
 
-// Initial State (Default memory jab app khulti hai)
+export const verifyAuthStatus = createAsyncThunk(
+    'auth/verifyStatus',
+    async (_, { rejectWithValue }) => {
+        try {
+            // Hum yahan LocalStorage check nahi karenge!
+            // Seedha /me ko call maro. Agar inMemory token null bhi hua, 
+            // toh backend 401 dega aur Interceptor automatically Refresh kar lega! (MAGIC!)
+            const response = await axiosInstance.get('/me'); 
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || 'Verification failed');
+        }
+    }
+);
+
 const initialState = {
-    user: null, // User ki profile (name, email, role)
-    isAuthenticated: false, // Kya user logged in hai?
-    loading: true, // Shuru mein loading true rahegi jab tak hum token check na kar lein
+    user: null,
+    isAuthenticated: false,
+    loading: true,
 };
 
 const authSlice = createSlice({
     name: 'auth',
     initialState,
     reducers: {
-        // Action 1: Login hone par state update karo
-        setCredentials: (state, action) => {
-            state.user = action.payload.user;
-            state.isAuthenticated = true;
-            state.loading = false;
-        },
-        // Action 2: Logout hone par sab saaf (clear) kar do
         logout: (state) => {
             state.user = null;
             state.isAuthenticated = false;
             state.loading = false;
-            localStorage.removeItem('access_token'); // Browser se token bhi uda do
+            clearAccessToken(); // Sirf RAM (memory) clean karni hai
         },
-        // Action 3: Agar page refresh par pata chale ki user logged in nahi hai
-        setAuthFailed: (state) => {
-            state.user = null;
-            state.isAuthenticated = false;
-            state.loading = false;
-        }
+    },
+    extraReducers: (builder) => {
+        builder
+            .addCase(verifyAuthStatus.pending, (state) => { state.loading = true; })
+            .addCase(verifyAuthStatus.fulfilled, (state, action) => {
+                state.user = action.payload.data;
+                state.isAuthenticated = true;
+                state.loading = false;
+            })
+            .addCase(verifyAuthStatus.rejected, (state) => {
+                state.user = null;
+                state.isAuthenticated = false;
+                state.loading = false;
+                clearAccessToken(); // Memory clean
+            });
     }
 });
 
-// Components mein use karne ke liye actions export karo
-export const { setCredentials, logout, setAuthFailed } = authSlice.actions;
-
-// Store mein jodne ke liye reducer export karo
+export const { logout } = authSlice.actions;
 export default authSlice.reducer;
