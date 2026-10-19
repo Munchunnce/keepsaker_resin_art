@@ -1,10 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from '../features/auth/authSlice';
-// Future mein yahan cartReducer aur productReducer bhi aayenge
+import productReducer from '../features/products/productSlice';
 
 const store = configureStore({
     reducer: {
         auth: authReducer,
+        products: productReducer,
         // cart: cartReducer,
     },
     // PRO-SECURITY FIX: Production mein React DevTools block kar do!
