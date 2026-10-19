@@ -35,7 +35,8 @@ const productSlice = createSlice({
             .addCase(fetchProducts.fulfilled, (state, action) => {
                 // Backend se data aaya, memory mein save kar lo!
                 // Maan lijiye aapke backend ne data `data.products` me bheja hai:
-                state.items = action.payload.products || action.payload; 
+                // state.items = action.payload.products || action.payload; 
+                state.items = action.payload.products || action.payload.data || (Array.isArray(action.payload) ? action.payload : []);
                 state.loading = false;
             })
             .addCase(fetchProducts.rejected, (state, action) => {

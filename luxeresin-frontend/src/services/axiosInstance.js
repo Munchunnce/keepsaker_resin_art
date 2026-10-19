@@ -1,14 +1,13 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/auth',
+    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1/auth',
     withCredentials: true,
 });
 
-//  THE VAULT: In-Memory Token Storage (Hacker isko nahi chhu sakta)
+// THE VAULT: In-Memory Token Storage
 let inMemoryAccessToken = null;
 
-// Ek function banayenge jisse baaki app token save kar sake (Login ke waqt)
 export const setAccessToken = (token) => {
     inMemoryAccessToken = token;
 };
@@ -27,11 +26,10 @@ const processQueue = (error, token = null) => {
 };
 
 // -------------------------------------------------------------
-//  REQUEST INTERCEPTOR
+// REQUEST INTERCEPTOR
 // -------------------------------------------------------------
 axiosInstance.interceptors.request.use(
     (config) => {
-        // LocalStorage ki jagah JS variable se token uthao
         if (inMemoryAccessToken) {
             config.headers['Authorization'] = `Bearer ${inMemoryAccessToken}`;
         }
@@ -41,7 +39,7 @@ axiosInstance.interceptors.request.use(
 );
 
 // -------------------------------------------------------------
-//  RESPONSE INTERCEPTOR
+// RESPONSE INTERCEPTOR
 // -------------------------------------------------------------
 axiosInstance.interceptors.response.use(
     (response) => response,
@@ -65,18 +63,20 @@ axiosInstance.interceptors.response.use(
             try {
                 const { data } = await axios.post(`${axiosInstance.defaults.baseURL}/refresh`, {}, { withCredentials: true });
                 
-                // Naya token aaya, isko Memory Vault me save karo
                 setAccessToken(data.access_token);
-                
                 processQueue(null, data.access_token);
                 
                 originalRequest.headers['Authorization'] = `Bearer ${data.access_token}`;
                 return axiosInstance(originalRequest);
 
             } catch (refreshError) {
+                // Agar Refresh Token fail ho jaye (e.g. user logged out hai)
                 processQueue(refreshError, null);
-                clearAccessToken(); // Memory saaf karo
-                window.location.href = '/login';
+                clearAccessToken(); 
+                
+                // 🛑 FIXED: Yahan se "window.location.href = '/login'" HATA DIYA GAYA HAI!
+                // Ab page loop (reload) nahi hoga. Redux error catch karke UI dikhayega.
+                
                 return Promise.reject(refreshError);
             } finally {
                 isRefreshing = false;

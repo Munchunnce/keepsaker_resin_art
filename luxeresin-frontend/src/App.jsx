@@ -8,9 +8,10 @@ import Navbar from './components/layout/Navbar.jsx';
 import ProtectedRoute from './routes/ProtectedRoutes.jsx';
 import Login from './pages/Login.jsx';       // Aapka banaya hua asli Login Page
 import Register from './pages/Register.jsx'; // Aapka banaya hua asli Register Page
+import Home from './pages/Home.jsx';         // Aapka banaya hua asli Home Page
 
 // Baaki bache hue Dummy Pages (Inko baad mein asali page se replace karenge)
-const Home = () => <h1>Home Page (Public)</h1>;
+// const Home = () => <h1>Home Page (Public)</h1>;
 const Cart = () => <h1>My Cart (Customers)</h1>;
 const AdminDashboard = () => <h1>Admin Dashboard (Top Secret)</h1>;
 const NotFound = () => <h1>404 - Page Not Found</h1>;
