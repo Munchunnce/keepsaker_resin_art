@@ -9,6 +9,7 @@ import ProtectedRoute from './routes/ProtectedRoutes.jsx';
 import Login from './pages/Login.jsx';       // Aapka banaya hua asli Login Page
 import Register from './pages/Register.jsx'; // Aapka banaya hua asli Register Page
 import Home from './pages/Home.jsx';         // Aapka banaya hua asli Home Page
+import SingleProduct from './pages/SingleProduct.jsx';
 
 // Baaki bache hue Dummy Pages (Inko baad mein asali page se replace karenge)
 // const Home = () => <h1>Home Page (Public)</h1>;
@@ -29,7 +30,7 @@ function App() {
       <Routes>
         {/* 🔓 PUBLIC ROUTES (Koi bhi aa sakta hai) */}
         <Route path="/" element={<Home />} />
-        
+        <Route path="/product/:slug" element={<SingleProduct />} />
         {/* 🚀 ASLI LOGIN AUR REGISTER YAHAN RENDER HONGE */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

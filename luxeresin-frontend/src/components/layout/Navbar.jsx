@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { logout } from '../../features/auth/authSlice';
+import { logoutUser } from '../../features/auth/authSlice';
 import toast from 'react-hot-toast';
 
 const Navbar = () => {
@@ -8,15 +8,25 @@ const Navbar = () => {
     const { isAuthenticated, user } = useSelector((state) => state.auth);
     // Future mein hum Cart ka count bhi yahan padhenge:
     // const cartItemCount = useSelector((state) => state.cart.totalItems);
+    const totalCartItems = useSelector((state) => state.cart.totalQuantity);
     
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
+    const userData = user?.user || user?.data || user; 
+    const firstName = userData?.full_name?.split(' ')[0] || 'User';
+    console.log("Backend se aane wala User Data:", userData);
+
     // LOGOUT LOGIC
-    const handleLogout = () => {
-        dispatch(logout()); // Redux state aur JS variable clear
-        toast.success('Logged out successfully! 👋');
-        navigate('/'); // Home page par phek do
+    const handleLogout = async () => {
+        try {
+            await dispatch(logoutUser()).unwrap(); // Wait for backend to delete Cookie
+            toast.success('Logged out successfully! 👋');
+            navigate('/');
+        } catch (error) {
+            console.error('Logout failed:', error);
+            toast.error(`Logout failed: ${error?.message || 'Please try again'}`);
+        }
     };
 
     return (
@@ -48,7 +58,7 @@ const Navbar = () => {
                             <>
                                 {/* USER GREETING */}
                                 <span className="hidden sm:block text-sm font-medium text-gray-600">
-                                    Hi, {user?.name?.split(' ')[0]} {/* Sirf first name dikhayega */}
+                                    Hi, {firstName} {/* Sirf first name dikhayega */}
                                 </span>
 
                                 {/* CART BUTTON (With Badge) */}
@@ -59,7 +69,7 @@ const Navbar = () => {
                                     </svg>
                                     {/* Cart Notification Badge (Dummy count 2 for now) */}
                                     <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-black rounded-full">
-                                        2
+                                        {totalCartItems}
                                     </span>
                                 </Link>
 
