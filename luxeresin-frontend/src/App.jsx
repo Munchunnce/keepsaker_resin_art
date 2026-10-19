@@ -12,6 +12,7 @@ import Register from './pages/Register.jsx'; // Aapka banaya hua asli Register P
 import Home from './pages/Home.jsx';         // Aapka banaya hua asli Home Page
 import SingleProduct from './pages/SingleProduct.jsx';
 import Cart from './pages/Cart.jsx';
+import Checkout from './pages/Checkout.jsx';
 
 // Baaki bache hue Dummy Pages (Inko baad mein asali page se replace karenge)
 // const Home = () => <h1>Home Page (Public)</h1>;
@@ -47,7 +48,7 @@ function App() {
         {/* 🔒 PROTECTED ROUTES (Sirf logged-in users) */}
         <Route element={<ProtectedRoute />}>
             <Route path="/cart" element={<Cart />} />
-            <Route path="/checkout" element={<h1>Checkout Page</h1>} />
+            <Route path="/checkout" element={<Checkout />} />
         </Route>
 
         {/* 👑 ADMIN ONLY ROUTES (Sirf Boss logo ke liye) */}
