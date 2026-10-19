@@ -8,7 +8,7 @@ const Navbar = () => {
     const { isAuthenticated, user } = useSelector((state) => state.auth);
     // Future mein hum Cart ka count bhi yahan padhenge:
     // const cartItemCount = useSelector((state) => state.cart.totalItems);
-    const totalCartItems = useSelector((state) => state.cart.totalQuantity);
+    const totalCartItems = useSelector((state) => state.cart.totalQuantity) || 0;
     
     const dispatch = useDispatch();
     const navigate = useNavigate();

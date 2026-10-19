@@ -183,17 +183,34 @@ const SingleProduct = () => {
 
             <button
               disabled={!currentProduct.inStock}
-              onClick={() => {
-                dispatch(
-                  addToCart({
-                    _id: currentProduct._id,
-                    name: currentProduct.name,
-                    basePrice: currentProduct.basePrice,
-                    image: displayedMainImage,
-                    selectedColor: activeColor || null,
-                  }),
-                );
-                toast.success(`${currentProduct.name} added to cart! 🛍️`);
+              // onClick={() => {
+              //   dispatch(
+              //     addToCart({
+              //       _id: currentProduct._id,
+              //       name: currentProduct.name,
+              //       basePrice: currentProduct.basePrice,
+              //       image: displayedMainImage,
+              //       selectedColor: activeColor || null,
+              //     }),
+              //   );
+              //   toast.success(`${currentProduct.name} added to cart! 🛍️`);
+              // }}
+              onClick={async () => {
+                try {
+                  // 🚨 FIX: payload map to productId standard as backend validates
+                  await dispatch(
+                    addToCart({
+                      productId: currentProduct._id, 
+                      quantity: 1,
+                      selectedSize: activeColor ? "Standard" : "24x24 Inches", // Example mapping
+                      selectedColor: activeColor || "Default",
+                      selectedAddons: [] // If addons not dynamic, empty array array validations require sort check
+                    })
+                  ).unwrap();
+                  toast.success(`${currentProduct.name} added to cart! 🛍️`);
+                } catch (err) {
+                  toast.error(err || 'Failed to add item to Cart');
+                }
               }}
               className="w-full py-5 bg-black text-white text-lg font-bold rounded-2xl hover:bg-gray-900 hover:shadow-2xl hover:-translate-y-1 transform transition-all duration-300 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none"
             >

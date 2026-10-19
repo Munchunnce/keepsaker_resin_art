@@ -12,7 +12,7 @@ export const fetchCart = createAsyncThunk('cart/fetchCart', async (_, { rejectWi
 });
 
 // 2. Add Item to DB Cart
-export const addToCartAPI = createAsyncThunk('cart/addToCartAPI', async (cartData, { rejectWithValue }) => {
+export const addToCart = createAsyncThunk('cart/addToCart', async (cartData, { rejectWithValue }) => {
     try {
         const response = await axiosInstance.post('/cart', cartData);
         return response.data.data;
@@ -41,17 +41,31 @@ export const removeCartItem = createAsyncThunk('cart/removeItem', async (itemId,
     }
 });
 
+// 🔥 Helper function jo dynamic quantities ko sum up karega
+const calculateTotalQuantity = (items) => {
+    if (!Array.isArray(items)) return 0;
+    return items.reduce((total, item) => total + (item.quantity || 0), 0);
+};
+
 const cartSlice = createSlice({
     name: 'cart',
     initialState: {
-        cart: null, // Backend ka poora cart object
+        cart: { items: [] }, // Backend ka poora cart object
+        totalQuantity: 0,
         loading: false,
         error: null,
     },
-    reducers: {},
+    reducers: {
+        clearCartOnLogout: (state) => {
+            state.cart = { items: [] };
+            state.totalQuantity = 0;
+            state.error = null;
+        }
+    },
     extraReducers: (builder) => {
         const handleSuccess = (state, action) => {
-            state.cart = action.payload;
+            state.cart = action.payload || { items: [] };
+            state.totalQuantity = calculateTotalQuantity(state.cart.items);
             state.loading = false;
         };
         const handlePending = (state) => { state.loading = true; state.error = null; };
@@ -62,9 +76,9 @@ const cartSlice = createSlice({
             .addCase(fetchCart.fulfilled, handleSuccess)
             .addCase(fetchCart.rejected, handleReject)
             
-            .addCase(addToCartAPI.pending, handlePending)
-            .addCase(addToCartAPI.fulfilled, handleSuccess)
-            .addCase(addToCartAPI.rejected, handleReject)
+            .addCase(addToCart.pending, handlePending)
+            .addCase(addToCart.fulfilled, handleSuccess)
+            .addCase(addToCart.rejected, handleReject)
 
             .addCase(updateCartItemQty.pending, handlePending)
             .addCase(updateCartItemQty.fulfilled, handleSuccess)

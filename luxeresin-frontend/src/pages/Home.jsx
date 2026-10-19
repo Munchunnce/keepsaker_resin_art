@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProducts } from "../features/products/productSlice";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { addToCart } from "../features/cart/cartSlice";
 
 const Home = () => {
   const dispatch = useDispatch();
@@ -60,7 +62,7 @@ const Home = () => {
                 <div
                   key={product._id}
                   // 1. Poore card par click karne se Single Product par jayega
-        onClick={() => navigate(`/product/${product.slug}`)}
+                  onClick={() => navigate(`/product/${product.slug}`)}
                   className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col"
                 >
                   {/* Image Box */}
@@ -99,10 +101,29 @@ const Home = () => {
                       <button
                         disabled={!product.inStock}
                         // 2. e.stopPropagation() se card ka click event ruk jayega aur user redirect nahi hoga!
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // Yahan future mein "dispatch(addToCart())" aayega
-                          console.log("Added to cart directly!");
+                        // onClick={(e) => {
+                        //   e.stopPropagation();
+                        //   // Yahan future mein "dispatch(addToCart())" aayega
+                        //   console.log("Added to cart directly!");
+                        // }}
+                        onClick={async (e) => {
+                          e.stopPropagation(); // Stop card navigate page trigger
+
+                          try {
+                            await dispatch(
+                              addToCart({
+                                productId: product._id, // Back-end validation key
+                                quantity: 1,
+                                selectedSize: "Standard",
+                                selectedColor: product.colors?.[0] || "Default",
+                                selectedAddons: [],
+                              }),
+                            ).unwrap();
+
+                            toast.success(`${product.name} added to cart! 🛍️`);
+                          } catch (err) {
+                            toast.error(err || "Error adding to bag");
+                          }
                         }}
                         className="px-4 py-2 bg-black text-white text-sm font-bold rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors"
                       >
