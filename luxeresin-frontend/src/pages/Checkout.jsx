@@ -17,7 +17,7 @@ const Checkout = () => {
     const shipping = subtotal > 5000 ? 0 : 250;
     const total = subtotal + shipping;
 
-    // 🧠 SMART PRE-FILL: Backend se aane wala userData aur address auto-fill ho jayega
+    // SMART PRE-FILL: Backend se aane wala userData aur address auto-fill ho jayega
     const userData = user?.user || user?.data || user;
     const existingAddress = userData?.address || {};
 
