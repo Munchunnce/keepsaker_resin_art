@@ -41,7 +41,7 @@ export const removeCartItem = createAsyncThunk('cart/removeItem', async (itemId,
     }
 });
 
-// 🔥 Helper function jo dynamic quantities ko sum up karega
+// Helper function jo dynamic quantities ko sum up karega
 const calculateTotalQuantity = (items) => {
     if (!Array.isArray(items)) return 0;
     return items.reduce((total, item) => total + (item.quantity || 0), 0);
