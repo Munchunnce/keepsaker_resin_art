@@ -8,16 +8,19 @@ const Checkout = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     
-    const { cart } = useSelector((state) => state.cart);
+    // 🚀 REDUX SE DISCOUNT AUR COUPON BHI NIKALA HAI
+    const { cart, discountAmount, appliedCoupon } = useSelector((state) => state.cart);
     const { user } = useSelector((state) => state.auth);
     const { loading } = useSelector((state) => state.order);
 
+    // 🚀 LIVE MATH LOGIC WITH DISCOUNT
     const items = cart?.items || [];
     const subtotal = items.reduce((acc, item) => acc + (item.product?.basePrice * item.quantity), 0);
-    const shipping = subtotal > 5000 ? 0 : 250;
-    const total = subtotal + shipping;
+    const finalSubtotal = subtotal - (discountAmount || 0); // Discount Minus kiya
+    const shipping = finalSubtotal > 5000 ? 0 : 250;
+    const total = finalSubtotal + shipping;
 
-    // SMART PRE-FILL: Backend se aane wala userData aur address auto-fill ho jayega
+    // SMART PRE-FILL
     const userData = user?.user || user?.data || user;
     const existingAddress = userData?.address || {};
 
@@ -30,12 +33,11 @@ const Checkout = () => {
         state: existingAddress.state || '',
     });
 
-    // Agar cart khali hai toh direct wapas bhej do
     useEffect(() => {
         if (items.length === 0) {
             navigate('/cart');
         }
-    }, [items, navigate]);
+    }, [items.length, navigate]);
 
     const handleInputChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -44,24 +46,25 @@ const Checkout = () => {
     const handleCheckout = async (e) => {
         e.preventDefault();
         
-        // Basic validation
         if (!formData.phone || !formData.streetAddress || !formData.pincode) {
             toast.error('Please fill all mandatory address fields.');
             return;
         }
 
         try {
-            // Aapke backend ke hisaab se payload
+            // 🚀 ORDER PAYLOAD MEIN COUPON BHI BHEJA HAI
             const orderPayload = {
                 shippingAddress: formData,
-                paymentMethod: 'COD', // Abhi ke liye Pay on Delivery
+                paymentMethod: 'COD',
                 items: items,
-                totalAmount: total
+                totalAmount: total,
+                couponCode: appliedCoupon || null,      // Backend ke liye record
+                discountAmount: discountAmount || 0     // Backend ke liye record
             };
 
             await dispatch(placeOrder(orderPayload)).unwrap();
             toast.success('Order Placed Successfully! 🎉');
-            navigate('/'); // Success ke baad home ya success page par bhej dein
+            navigate('/my-orders'); // Success ke baad My Orders page par bhej dein
         } catch (error) {
             toast.error(error || 'Failed to process order.');
         }
@@ -71,7 +74,6 @@ const Checkout = () => {
         <div className="bg-gray-50 min-h-screen py-12 md:py-20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 
-                {/* Back Button */}
                 <button onClick={() => navigate('/cart')} className="mb-8 flex items-center text-sm font-semibold text-gray-500 hover:text-black transition-colors">
                     <span className="mr-2">←</span> Back to Cart
                 </button>
@@ -159,6 +161,15 @@ const Checkout = () => {
                                     <span>Subtotal</span>
                                     <span className="text-white">₹{subtotal}</span>
                                 </div>
+
+                                {/* 🚀 NEW: DISCOUNT ROW IN DARK MODE */}
+                                {discountAmount > 0 && (
+                                    <div className="flex justify-between text-green-400 font-bold">
+                                        <span>Discount ({appliedCoupon})</span>
+                                        <span>-₹{discountAmount}</span>
+                                    </div>
+                                )}
+
                                 <div className="flex justify-between">
                                     <span>Shipping</span>
                                     <span className="text-white">{shipping === 0 ? 'Free' : `₹${shipping}`}</span>
@@ -176,7 +187,7 @@ const Checkout = () => {
                                 disabled={loading}
                                 className="w-full py-5 bg-white text-black text-lg font-bold rounded-2xl hover:bg-gray-200 hover:-translate-y-1 transform transition-all duration-300 disabled:opacity-50 disabled:hover:translate-y-0"
                             >
-                                {loading ? 'Processing...' : 'Confirm Order'}
+                                {loading ? 'Processing...' : `Confirm Order - ₹${total}`}
                             </button>
                             
                             <p className="text-center text-xs text-gray-400 mt-6 font-medium flex justify-center items-center gap-2">

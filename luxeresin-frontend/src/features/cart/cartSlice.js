@@ -47,11 +47,24 @@ const calculateTotalQuantity = (items) => {
     return items.reduce((total, item) => total + (item.quantity || 0), 0);
 };
 
+// coupon code apply
+export const applyCouponCode = createAsyncThunk('cart/applyCoupon', async (code, { rejectWithValue }) => {
+    try {
+        const response = await axiosInstance.post('/cart/apply-coupon', { code });
+        // Backend se originalTotal, discountAmount, finalTotal aayega
+        return { code, ...response.data.data }; 
+    } catch (error) {
+        return rejectWithValue(error.response?.data?.message || 'Invalid coupon code');
+    }
+});
+
 const cartSlice = createSlice({
     name: 'cart',
     initialState: {
         cart: { items: [] }, // Backend ka poora cart object
         totalQuantity: 0,
+        appliedCoupon: null,
+        discountAmount: 0,
         loading: false,
         error: null,
     },
@@ -86,7 +99,23 @@ const cartSlice = createSlice({
 
             .addCase(removeCartItem.pending, handlePending)
             .addCase(removeCartItem.fulfilled, handleSuccess)
-            .addCase(removeCartItem.rejected, handleReject);
+            .addCase(removeCartItem.rejected, handleReject)
+
+            .addCase(applyCouponCode.pending, (state) => { 
+                state.loading = true; 
+                state.error = null; 
+    })
+    .addCase(applyCouponCode.fulfilled, (state, action) => {
+        state.loading = false;
+        state.appliedCoupon = action.payload.code;
+        state.discountAmount = action.payload.discountAmount;
+    })
+    .addCase(applyCouponCode.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.appliedCoupon = null;
+        state.discountAmount = 0;
+    });
     }
 });
 
