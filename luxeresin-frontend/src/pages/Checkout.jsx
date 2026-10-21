@@ -9,6 +9,9 @@ const Checkout = () => {
   const dispatch = useDispatch();
 
   const [isOrderSuccess, setIsOrderSuccess] = useState(false);
+  
+  // 🚀 NAYA: Payment Method State ('COD' by default)
+  const [paymentMethod, setPaymentMethod] = useState("COD");
 
   // 🚀 REDUX SE DISCOUNT AUR COUPON BHI NIKALA HAI
   const { cart, discountAmount, appliedCoupon } = useSelector(
@@ -53,11 +56,7 @@ const Checkout = () => {
   const handleCheckout = async (e) => {
     e.preventDefault();
 
-    // if (!formData.phone || !formData.streetAddress || !formData.pincode) {
-    //     toast.error('Please fill all mandatory address fields.');
-    //     return;
-    // }
-    // 1. Strict Frontend Validation (Backend jaisa)
+    // 1. Strict Frontend Validation
     if (!/^[0-9]{10}$/.test(formData.phone)) {
       toast.error("Phone number must be exactly 10 digits.");
       return;
@@ -71,8 +70,14 @@ const Checkout = () => {
       return;
     }
 
+    // 🚀 Agar user ne abhi online select kiya hai toh future ke liye alert/toast
+    if (paymentMethod === "ONLINE") {
+      toast.error("Online payment gateway will be integrated soon! Please select Pay on Delivery.");
+      return;
+    }
+
     try {
-      // 🚀 ORDER PAYLOAD MEIN COUPON BHI BHEJA HAI
+      // 🚀 ORDER PAYLOAD MEIN DYNAMIC PAYMENT METHOD BHEJA HAI
       const orderPayload = {
         shippingAddress: {
           fullName: formData.fullName,
@@ -82,13 +87,13 @@ const Checkout = () => {
           city: formData.city,
           state: formData.state,
         },
-        paymentMethod: "COD", // Backend ke liye record
+        paymentMethod: paymentMethod, // 'COD' ya 'ONLINE'
       };
 
       await dispatch(placeOrder(orderPayload)).unwrap();
       setIsOrderSuccess(true);
       toast.success("Order Placed Successfully! 🎉");
-      navigate("/my-orders"); // Success ke baad My Orders page par bhej dein
+      navigate("/my-orders"); 
     } catch (error) {
       toast.error(error || "Failed to process order.");
     }
@@ -104,9 +109,16 @@ const Checkout = () => {
           <span className="mr-2">←</span> Back to Cart
         </button>
 
-        <h1 className="text-4xl font-extrabold text-gray-900 mb-10 tracking-tight">
+        {/* <h1 className="text-4xl font-extrabold text-gray-900 mb-10 tracking-tight">
           Secure Checkout
-        </h1>
+        </h1> */}
+        {/* 🚀 3D GOLDEN GRADIENT HEADING */}
+        <div className="mb-10">
+          <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] tracking-tight drop-shadow-[0_2px_10px_rgba(212,175,55,0.2)]">
+            Secure Checkout
+          </h1>
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-2">Finalize Your Luxury Acquisition</p>
+        </div>
 
         <div className="flex flex-col lg:flex-row gap-12">
           {/* LEFT: SHIPPING FORM */}
@@ -206,15 +218,56 @@ const Checkout = () => {
                   </div>
                 </div>
 
+                {/* 🚀 PAYMENT METHOD SELECTION OPTIONS */}
                 <div className="pt-8 mt-8 border-t border-gray-100">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6">
                     Payment Method
                   </h2>
-                  <div className="flex items-center p-5 border-2 border-black rounded-xl bg-gray-50">
-                    <div className="w-5 h-5 rounded-full border-4 border-black bg-white mr-4"></div>
-                    <span className="font-bold text-gray-900">
-                      Pay on Delivery (Cash/UPI)
-                    </span>
+                  <div className="space-y-4">
+                    
+                    {/* OPTION 1: COD */}
+                    <label 
+                      onClick={() => setPaymentMethod("COD")}
+                      className={`flex items-center p-5 border-2 rounded-xl cursor-pointer transition-all ${
+                        paymentMethod === "COD" ? "border-black bg-gray-50 shadow-sm" : "border-gray-200 bg-white"
+                      }`}
+                    >
+                      <input 
+                        type="radio" 
+                        name="payment" 
+                        checked={paymentMethod === "COD"} 
+                        onChange={() => setPaymentMethod("COD")} 
+                        className="w-4 h-4 text-black accent-black mr-4 cursor-pointer" 
+                      />
+                      <div>
+                        <span className="font-bold text-gray-900 block">Pay on Delivery (Cash / UPI)</span>
+                        <span className="text-xs text-gray-500">Pay securely when your resin artifact arrives at your doorstep.</span>
+                      </div>
+                    </label>
+
+                    {/* OPTION 2: ONLINE / CARD / UPI (FUTURE READY) */}
+                    <label 
+                      onClick={() => setPaymentMethod("ONLINE")}
+                      className={`flex items-center p-5 border-2 rounded-xl cursor-pointer transition-all ${
+                        paymentMethod === "ONLINE" ? "border-black bg-gray-50 shadow-sm" : "border-gray-200 bg-white"
+                      }`}
+                    >
+                      <input 
+                        type="radio" 
+                        name="payment" 
+                        checked={paymentMethod === "ONLINE"} 
+                        onChange={() => setPaymentMethod("ONLINE")} 
+                        className="w-4 h-4 text-black accent-black mr-4 cursor-pointer" 
+                      />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-gray-900">Online Payment (UPI / Credit / Debit Card)</span>
+                          <span className="text-[10px] bg-black text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">Coming Soon</span>
+                        </div>
+                        <span className="text-xs text-gray-500">Instant online payment via Razorpay / Stripe integration.</span>
+                      </div>
+                    </label>
+
                   </div>
                 </div>
               </form>
@@ -257,7 +310,6 @@ const Checkout = () => {
                   <span className="text-white">₹{subtotal}</span>
                 </div>
 
-                {/* 🚀 NEW: DISCOUNT ROW IN DARK MODE */}
                 {discountAmount > 0 && (
                   <div className="flex justify-between text-green-400 font-bold">
                     <span>Discount ({appliedCoupon})</span>
@@ -282,7 +334,7 @@ const Checkout = () => {
                 type="submit"
                 form="checkout-form"
                 disabled={loading}
-                className="w-full py-5 bg-white text-black text-lg font-bold rounded-2xl hover:bg-gray-200 hover:-translate-y-1 transform transition-all duration-300 disabled:opacity-50 disabled:hover:translate-y-0"
+                className="w-full py-5 bg-white text-black text-lg font-bold rounded-2xl hover:bg-gray-200 hover:-translate-y-1 transform transition-all duration-300 disabled:opacity-50 disabled:hover:translate-y-0 cursor-pointer"
               >
                 {loading ? "Processing..." : `Confirm Order - ₹${total}`}
               </button>
