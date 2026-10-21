@@ -29,11 +29,41 @@ export const fetchMyOrders = createAsyncThunk(
     }
 );
 
+// 🚀 3. FETCH ALL ORDERS (ADMIN ONLY)
+export const fetchAllOrders = createAsyncThunk(
+    'order/fetchAllOrders', 
+    async (_, { rejectWithValue }) => {
+        try {
+            // Note: Apne backend route ke hisaab se endpoint check kar lijiye. 
+            // Agar route '/order/all' hai toh wo likhiye.
+            const response = await axiosInstance.get('/order/all'); 
+            return response.data.data; // controller.allOrders se 'data' array aayega
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to fetch admin orders');
+        }
+    }
+);
+
+// 🚀 4. UPDATE ORDER STATUS (ADMIN ONLY)
+export const updateOrderStatus = createAsyncThunk(
+    'order/updateOrderStatus',
+    async ({ id, orderStatus }, { rejectWithValue }) => {
+        try {
+            // Apna backend route check kar lein (e.g., /order/admin/status/:id)
+            const response = await axiosInstance.put(`/order/${id}/status`, { orderStatus });
+            return response.data.data; // Updated order return hoga
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to update status');
+        }
+    }
+);
+
 const orderSlice = createSlice({
     name: 'order',
     initialState: {
         currentOrder: null,
         myOrders: [], 
+        allOrders: [],
         loading: false,
         error: null,
     },
@@ -69,6 +99,34 @@ const orderSlice = createSlice({
             .addCase(fetchMyOrders.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
+            })
+            // 🚀 FETCH ALL ORDERS (ADMIN) Cases
+            .addCase(fetchAllOrders.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchAllOrders.fulfilled, (state, action) => {
+                state.loading = false;
+                state.allOrders = action.payload; // 🚀 Data Redux mein save ho gaya
+            })
+            .addCase(fetchAllOrders.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            .addCase(updateOrderStatus.fulfilled, (state, action) => {
+                const updatedOrder = action.payload; // Jo backend ne naya status bheja
+                
+                // 1. Admin ke allOrders array mein usko turant update karo
+                const index = state.allOrders.findIndex(o => o._id === updatedOrder._id);
+                if (index !== -1) {
+                    state.allOrders[index] = updatedOrder;
+                }
+
+                // 2. Agar by chance customer ka myOrders bhi load hai toh wahan bhi update kar do
+                const myIndex = state.myOrders.findIndex(o => o._id === updatedOrder._id);
+                if (myIndex !== -1) {
+                    state.myOrders[myIndex] = updatedOrder;
+                }
             });
     }
 });

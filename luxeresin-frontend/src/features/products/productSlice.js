@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../../services/axiosInstance';
 
-// Saare products mangwane ke liye (Purana wala)
+// Saare products mangwane ke liye
 export const fetchProducts = createAsyncThunk('products/fetchAll', async (_, { rejectWithValue }) => {
     try {
         const response = await axiosInstance.get('/products');
@@ -11,7 +11,7 @@ export const fetchProducts = createAsyncThunk('products/fetchAll', async (_, { r
     }
 });
 
-// 🚀 NAYA: Ek Single Product mangwane ke liye (Slug ke zariye)
+// Ek Single Product mangwane ke liye (Slug ke zariye)
 export const fetchProductBySlug = createAsyncThunk('products/fetchSingle', async (slug, { rejectWithValue }) => {
     try {
         const response = await axiosInstance.get(`/products/${slug}`);
@@ -21,12 +21,27 @@ export const fetchProductBySlug = createAsyncThunk('products/fetchSingle', async
     }
 });
 
+// 🚀 NAYA: Admin ke liye New Artifact (Product) create karne ka thunk
+export const createProduct = createAsyncThunk(
+    'product/createProduct',
+    async (productData, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.post('/products', productData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to create artifact');
+        }
+    }
+);
+
 const initialState = {
     items: [], 
     loading: true, 
     error: null,
     
-    // Naya Single Product State
+    // Single Product State
     currentProduct: null,
     singleLoading: true,
     singleError: null,
@@ -54,11 +69,21 @@ const productSlice = createSlice({
             // Single Product
             .addCase(fetchProductBySlug.pending, (state) => { state.singleLoading = true; state.singleError = null; })
             .addCase(fetchProductBySlug.fulfilled, (state, action) => {
-                // Backend ka data extract karo
                 state.currentProduct = action.payload.data || action.payload;
                 state.singleLoading = false;
             })
-            .addCase(fetchProductBySlug.rejected, (state, action) => { state.singleLoading = false; state.singleError = action.payload; });
+            .addCase(fetchProductBySlug.rejected, (state, action) => { state.singleLoading = false; state.singleError = action.payload; })
+
+            // 🚀 NAYA: Create Product Cases
+            .addCase(createProduct.pending, (state) => { state.loading = true; state.error = null; })
+            .addCase(createProduct.fulfilled, (state, action) => {
+                state.loading = false;
+                const newProduct = action.payload.data || action.payload;
+                if (newProduct) {
+                    state.items.push(newProduct); // List mein turant jod do
+                }
+            })
+            .addCase(createProduct.rejected, (state, action) => { state.loading = false; state.error = action.payload; });
     }
 });
 
