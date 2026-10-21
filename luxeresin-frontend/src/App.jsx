@@ -20,6 +20,7 @@ import AdminLayout from './components/layout/AdminLayout.jsx';
 import AdminOrders from './pages/admin/AdminOrders.jsx';
 import AdminProducts from './pages/admin/AdminProducts.jsx';
 import AdminProductForm from './pages/admin/AdminProductForm.jsx';
+import AdminCoupons from './pages/admin/AdminCoupons.jsx';
 
 // Baaki bache hue Dummy Pages (Inko baad mein asali page se replace karenge)
 // const Home = () => <h1>Home Page (Public)</h1>;
@@ -70,7 +71,7 @@ function App() {
                 <Route path="/admin/orders" element={<AdminOrders />} />
                 <Route path="/admin/products" element={<AdminProducts />} />
                 <Route path="/admin/products/new" element={<AdminProductForm />} />
-                <Route path="/admin/coupons" element={<h1>Coupons Forge</h1>} />
+                <Route path="/admin/coupons" element={<AdminCoupons />} />
             </Route>
         </Route>
 
