@@ -5,7 +5,7 @@ import { verifyAuthStatus } from './features/auth/authSlice';
 import { fetchCart } from './features/cart/cartSlice';
 import { Toaster } from 'react-hot-toast';
 
-// 1. ASLI PAGES KO IMPORT KAREIN (Dummy nahi)
+// 1. PAGES
 import Navbar from './components/layout/Navbar.jsx';
 import ProtectedRoute from './routes/ProtectedRoutes.jsx';
 import Login from './pages/Login.jsx';
@@ -21,6 +21,11 @@ import AdminOrders from './pages/admin/AdminOrders.jsx';
 import AdminProducts from './pages/admin/AdminProducts.jsx';
 import AdminProductForm from './pages/admin/AdminProductForm.jsx';
 import AdminCoupons from './pages/admin/AdminCoupons.jsx';
+import Footer from './pages/Footer.jsx';
+import Shop from './pages/Shop.jsx';
+import About from './pages/About.jsx';
+import CategoryProducts from './pages/CategoryProducts.jsx';
+import CategoryShowcase from './components/categoryShowcase/CategoryShowcase.jsx';
 
 // Baaki bache hue Dummy Pages (Inko baad mein asali page se replace karenge)
 // const Home = () => <h1>Home Page (Public)</h1>;
@@ -53,12 +58,16 @@ function App() {
         {/* 🔓 PUBLIC ROUTES (Koi bhi aa sakta hai) */}
         <Route path="/" element={<Home />} />
         <Route path="/product/:slug" element={<SingleProduct />} />
+        <Route path="/categories" element={<CategoryShowcase />} />
+        <Route path="/category/:slug" element={<CategoryProducts />} />
+        <Route path="/about" element={<About />} />
         {/* 🚀 ASLI LOGIN AUR REGISTER YAHAN RENDER HONGE */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
         {/* 🔒 PROTECTED ROUTES (Sirf logged-in users) */}
         <Route element={<ProtectedRoute />}>
+            <Route path="/products" element={<Shop />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/my-orders" element={<MyOrders />} />
@@ -78,6 +87,7 @@ function App() {
         {/* 🚫 404 CATCH-ALL (Koi galat URL dale toh) */}
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <Footer />
     </Router>
   );
 }

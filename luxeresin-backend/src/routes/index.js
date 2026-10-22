@@ -62,4 +62,20 @@ router.post('/admin/coupon', [auth, admin], couponController.createCoupon);
 // Customer Route: Cart mein code apply karne ke liye
 router.post('/cart/apply-coupon', auth, couponController.applyCoupon);
 
+// --- Category Routes ---
+// POST: Admin category banayega
+router.post('/categories', auth, admin, categoryController.store);
+
+// 🚀 NAYA: GET ALL - Koi bhi visitor saari categories dekh sakta hai (Public)
+router.get('/categories', categoryController.index);
+
+// 🚀 NAYA: GET SINGLE - Ek category aur uske saare products (Public)
+router.get('/categories/:slug', categoryController.show);
+
+// 🚀 NAYA: PUT - Admin category update karega
+router.put('/categories/:id', [auth, admin], categoryController.update);
+
+// 🚀 NAYA: DELETE - Admin category hide/delete karega
+router.delete('/categories/:id', [auth, admin], categoryController.destroy);
+
 export default router;
