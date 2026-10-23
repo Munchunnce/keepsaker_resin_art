@@ -2,8 +2,8 @@ import { useForm } from 'react-hook-form';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import toast, { Toaster } from 'react-hot-toast';
-import axiosInstance, { setAccessToken } from '../services/axiosInstance'; // The Vault
-import { verifyAuthStatus } from '../features/auth/authSlice'; // The Redux Brain
+import axiosInstance, { setAccessToken } from '../services/axiosInstance'; 
+import { verifyAuthStatus } from '../features/auth/authSlice'; 
 
 const Login = () => {
     const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm();
@@ -11,98 +11,123 @@ const Login = () => {
     const location = useLocation();
     const dispatch = useDispatch();
 
-    // 🎯 THE TELEPORTATION TARGET
-    // Pata karo ki user kahan se aaya tha? Agar direct /login type kiya toh Home ('/') bhejenge.
     const from = location.state?.from?.pathname || '/';
 
     const onSubmit = async (data) => {
         try {
-            // 1. API HIT: Backend ko credentials bhejo
             const response = await axiosInstance.post('/login', {
                 email: data.email,
                 password: data.password
             });
 
-            // 2. THE VAULT LOCK: Token nikal kar In-Memory RAM mein save karo (100% Hack-Proof)
             const token = response.data.access_token;
             setAccessToken(token);
 
-            // 3. THE REDUX AWAKENING: Backend se fresh profile (/me) mangwa kar state update karo
-            // .unwrap() error ko catch block me bhej dega agar verify fail hua
             await dispatch(verifyAuthStatus()).unwrap();
 
-            // 4. PREMIUM WELCOME
-            toast.success('Welcome back to LuxeResin! 💎');
-
-            // 5. TELEPORTATION: User ko wahi bhejo jahan wo jana chahta tha
+            toast.success('Welcome back to The Vault! 💎');
             navigate(from, { replace: true });
 
         } catch (error) {
-            // Hacker/Wrong password defense
-            const errorMsg = error.response?.data?.message || 'Invalid email or password';
+            const errorMsg = error.response?.data?.message || 'Invalid keys to the vault.';
             toast.error(errorMsg);
         }
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-            <Toaster position="top-center" />
+        <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden group perspective-1000">
+            
+            <Toaster 
+                position="top-center" 
+                toastOptions={{ 
+                    style: { background: '#121212', color: '#D4AF37', border: '1px solid rgba(212,175,55,0.3)', fontWeight: 'bold', boxShadow: '0 10px 30px rgba(212,175,55,0.2)' } 
+                }} 
+            />
 
-            <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-                <div className="text-center mb-8">
-                    <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-                        Welcome Back
+            {/* 🚀 FULL SCREEN HD ANIMATED BACKGROUND WITH 3D HOVER */}
+            <div className="absolute inset-0 z-0 overflow-hidden bg-black">
+                <img 
+                    src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=100&w=2560&auto=format&fit=crop" 
+                    alt="Luxury HD Resin Art" 
+                    className="w-full h-full object-cover scale-110 opacity-85 contrast-125 saturate-[1.2] transition-all duration-[15000ms] ease-out group-hover:scale-125 group-hover:rotate-2 animate-[pulse_8s_ease-in-out_infinite]"
+                />
+                
+                {/* LIGHTER OVERLAYS */}
+                <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/70 via-[#050505]/20 to-[#050505]/80 transition-opacity duration-1000 group-hover:opacity-80"></div>
+                <div className="absolute inset-0 bg-[#D4AF37]/10 mix-blend-overlay pointer-events-none animate-pulse"></div>
+            </div>
+
+            {/* 🚀 3D FLOATING CENTERED FORM */}
+            <div className="relative z-10 w-full max-w-md bg-[#0a0a0a]/60 backdrop-blur-2xl rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] border border-white/10 hover:border-[#D4AF37]/50 hover:shadow-[0_20px_80px_rgba(212,175,55,0.3)] transition-all duration-500 transform-gpu hover:-translate-y-3 hover:scale-[1.02] p-8 sm:p-10">
+                
+                {/* BACK GLOW EFFECT */}
+                <div className="absolute -inset-1 bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] rounded-2xl blur-xl opacity-0 hover:opacity-20 transition-opacity duration-700 pointer-events-none -z-10"></div>
+
+                {/* HEADER */}
+                <div className="text-center mb-10 space-y-3 relative z-20">
+                    <p className="text-[10px] font-black text-[#D4AF37] uppercase tracking-[0.4em] group-hover:tracking-[0.6em] transition-all duration-700 drop-shadow-md">Return to Excellence</p>
+                    <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] tracking-tight pb-1 drop-shadow-[0_5px_15px_rgba(212,175,55,0.4)]">
+                        Enter The Vault
                     </h2>
-                    <p className="text-sm text-gray-500 mt-2">Sign in to your LuxeResin account.</p>
+                    <p className="text-xs text-gray-200 font-medium tracking-wide drop-shadow-sm">
+                        Use your keys to access your curated collection.
+                    </p>
                 </div>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                    {/* EMAIL FIELD */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Email Address</label>
+                {/* FORM */}
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 relative z-20">
+                    
+                    <div className="group/input relative">
+                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-300 mb-2 group-focus-within/input:text-[#D4AF37] transition-colors drop-shadow-md">
+                            Email Address
+                        </label>
                         <input
                             type="email"
-                            className={`mt-1 block w-full px-4 py-3 bg-gray-50 border ${errors.email ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-colors`}
+                            className={`w-full px-4 py-3 bg-[#050505]/80 border ${errors.email ? 'border-red-500/80' : 'border-white/10'} rounded-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] hover:border-white/30 transition-all shadow-inner text-sm font-bold`}
                             placeholder="munchun@example.com"
                             {...register('email', { required: 'Email is required' })}
                         />
-                        {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
+                        {errors.email && <p className="text-red-400 text-[10px] mt-1.5 font-bold uppercase tracking-wide drop-shadow-md">{errors.email.message}</p>}
                     </div>
 
-                    {/* PASSWORD FIELD */}
-                    <div>
-                        <div className="flex justify-between items-center">
-                            <label className="block text-sm font-medium text-gray-700">Password</label>
-                            <a href="#" className="text-xs font-semibold text-gray-600 hover:text-black">
-                                Forgot password?
+                    <div className="group/input relative">
+                        <div className="flex justify-between items-center mb-2">
+                            <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-300 group-focus-within/input:text-[#D4AF37] transition-colors drop-shadow-md">
+                                Password
+                            </label>
+                            <a href="#" className="text-[10px] font-bold text-gray-400 hover:text-[#D4AF37] transition-colors uppercase tracking-widest">
+                                Lost Keys?
                             </a>
                         </div>
                         <input
                             type="password"
-                            className={`mt-1 block w-full px-4 py-3 bg-gray-50 border ${errors.password ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:outline-none focus:ring-2 focus:ring-black transition-colors`}
+                            className={`w-full px-4 py-3 bg-[#050505]/80 border ${errors.password ? 'border-red-500/80' : 'border-white/10'} rounded-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] hover:border-white/30 transition-all shadow-inner text-sm font-bold`}
                             placeholder="••••••••"
                             {...register('password', { required: 'Password is required' })}
                         />
-                        {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
+                        {errors.password && <p className="text-red-400 text-[10px] mt-1.5 font-bold uppercase tracking-wide drop-shadow-md">{errors.password.message}</p>}
                     </div>
 
-                    {/* SUBMIT BUTTON */}
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50 transition-all"
+                        className="w-full relative overflow-hidden group/btn flex justify-center py-4 px-4 bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] text-black text-xs font-black uppercase tracking-widest rounded-sm focus:outline-none disabled:opacity-50 transition-all duration-500 shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:shadow-[0_0_40px_rgba(212,175,55,0.8)] mt-8 cursor-pointer transform-gpu hover:scale-105"
                     >
-                        {isSubmitting ? 'Signing in...' : 'Sign In'}
+                        {/* Shimmer Effect */}
+                        <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000"></div>
+                        <span className="relative z-10">{isSubmitting ? 'Unlocking...' : 'Unlock Now'}</span>
                     </button>
                 </form>
 
                 {/* REGISTER LINK */}
-                <p className="mt-8 text-center text-sm text-gray-600">
-                    New to LuxeResin?{' '}
-                    <Link to="/register" className="font-bold text-black hover:underline">
-                        Create an account
-                    </Link>
-                </p>
+                <div className="mt-8 text-center border-t border-white/10 pt-6 relative z-20">
+                    <p className="text-xs text-gray-300 font-medium drop-shadow-sm">
+                        New to the Vault?{' '}
+                        <Link to="/register" className="text-[#D4AF37] font-black hover:text-[#FCF6BA] hover:underline transition-colors tracking-widest drop-shadow-[0_0_8px_rgba(212,175,55,0.6)]">
+                            FORGE IDENTITY
+                        </Link>
+                    </p>
+                </div>
             </div>
         </div>
     );
