@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-import { loginController, registerController, userController, refreshController, categoryController, productController, cartController, orderController, couponController } from "../controllers/index.js";
+import { loginController, registerController, userController, refreshController, categoryController, productController, cartController, orderController, couponController, customArtController } from "../controllers/index.js";
 import auth from "../middlewares/auth.js";
 import admin from "../middlewares/admin.js";
 import reviewController from "../controllers/product/reviewController.js";
@@ -67,5 +67,15 @@ router.get('/categories', categoryController.index);
 router.get('/categories/:slug', categoryController.show);
 router.put('/categories/:id', [auth, admin], categoryController.update);
 router.delete('/categories/:id', [auth, admin], categoryController.destroy);
+
+// --- CUSTOM ART REQUEST ROUTES ---
+// POST: Customer apni photo aur detail submit karega
+router.post('/custom-art', auth, upload.single('image'), customArtController.submitRequest);
+
+// GET: Admin saari requests check karega
+router.get('/admin/custom-art', auth, admin, customArtController.getAllRequests);
+
+// PUT: Admin final price ya status update karega
+router.put('/admin/custom-art/:id', auth, admin, customArtController.updateRequest);
 
 export default router;

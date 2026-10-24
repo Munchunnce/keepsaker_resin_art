@@ -18,3 +18,6 @@ export { default as orderController } from './order/orderController.js';
 
 // --- Coupon Controllers ---
 export { default as couponController } from './order/couponController.js';
+
+// --- CUSTOM ART REQUEST Controller ---
+export { default as customArtController } from './order/customArtController.js';
