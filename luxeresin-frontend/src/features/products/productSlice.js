@@ -1,10 +1,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../../services/axiosInstance';
 
-// Saare products mangwane ke liye
-export const fetchProducts = createAsyncThunk('products/fetchAll', async (_, { rejectWithValue }) => {
+// 🚀 UPGRADED: Saare products mangwane ke liye (Search & Filter Ready)
+export const fetchProducts = createAsyncThunk('products/fetchAll', async (queryParams = {}, { rejectWithValue }) => {
     try {
-        const response = await axiosInstance.get('/products');
+        // Axios apne aap queryParams ko URL mein `?search=abc` mein convert kar dega
+        const response = await axiosInstance.get('/products', { params: queryParams });
         return response.data;
     } catch (error) {
         return rejectWithValue(error.response?.data?.message || 'Failed to fetch products');
@@ -21,7 +22,7 @@ export const fetchProductBySlug = createAsyncThunk('products/fetchSingle', async
     }
 });
 
-// 🚀 NAYA: Admin ke liye New Artifact (Product) create karne ka thunk
+// Admin ke liye New Artifact (Product) create karne ka thunk
 export const createProduct = createAsyncThunk(
     'product/createProduct',
     async (productData, { rejectWithValue }) => {
@@ -74,13 +75,13 @@ const productSlice = createSlice({
             })
             .addCase(fetchProductBySlug.rejected, (state, action) => { state.singleLoading = false; state.singleError = action.payload; })
 
-            // 🚀 NAYA: Create Product Cases
+            // Create Product Cases
             .addCase(createProduct.pending, (state) => { state.loading = true; state.error = null; })
             .addCase(createProduct.fulfilled, (state, action) => {
                 state.loading = false;
                 const newProduct = action.payload.data || action.payload;
                 if (newProduct) {
-                    state.items.push(newProduct); // List mein turant jod do
+                    state.items.push(newProduct);
                 }
             })
             .addCase(createProduct.rejected, (state, action) => { state.loading = false; state.error = action.payload; });
