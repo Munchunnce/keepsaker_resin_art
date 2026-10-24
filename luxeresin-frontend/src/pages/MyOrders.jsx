@@ -56,8 +56,8 @@ const MyOrders = () => {
                                 <div className="mt-4 sm:mt-0 text-left sm:text-right">
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Current Status</p>
                                     <span className={`relative inline-flex items-center px-5 py-2.5 text-[11px] font-black rounded-sm border transition-all ${
-                                        order.orderStatus === 'DELIVERED' ? 'bg-green-50 text-green-700 border-green-200' : 
-                                        order.orderStatus === 'SHIPPED' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                        order.orderStatus === 'DELIVERED' ? 'bg-green-100 text-green-800 border-green-300' : 
+                                        order.orderStatus === 'SHIPPED' ? 'bg-blue-100 text-blue-800 border-blue-300' :
                                         // 🚀 PLACED aur PROCESSING dono ke liye Deep Obsidian Black background
                                         'bg-[#050505] border-[#D4AF37]/30 shadow-[0_0_20px_rgba(212,175,55,0.12)] uppercase tracking-[0.2em]' 
                                     }`}>
@@ -71,7 +71,7 @@ const MyOrders = () => {
                                         <span className={
                                             (order.orderStatus === 'PLACED' || order.orderStatus === 'PROCESSING' || !order.orderStatus) 
                                                 ? "bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] text-transparent bg-clip-text"
-                                                : "text-white"
+                                                : ""
                                         }>
                                             {order.orderStatus || 'PLACED'}
                                         </span>
