@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  fetchProductBySlug,
-  clearSingleProduct,
-} from "../features/products/productSlice";
+import { fetchProductBySlug, clearSingleProduct } from "../features/products/productSlice";
 import { addToCart } from "../features/cart/cartSlice";
 import toast from "react-hot-toast";
 
@@ -17,8 +14,11 @@ const SingleProduct = () => {
     (state) => state.products,
   );
 
+  // States
   const [mainImage, setMainImage] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
+  const [selectedSize, setSelectedSize] = useState(null);
+  const [selectedAddons, setSelectedAddons] = useState([]);
   
   const [isZooming, setIsZooming] = useState(false);
   const [zoomStyle, setZoomStyle] = useState({});
@@ -32,27 +32,54 @@ const SingleProduct = () => {
 
   if (singleLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-16 grid grid-cols-1 md:grid-cols-2 gap-16 animate-pulse">
-        <div className="aspect-square bg-gray-200 rounded-3xl"></div>
-        <div className="space-y-6 pt-10">
-          <div className="h-10 bg-gray-200 rounded-lg w-3/4"></div>
-          <div className="h-6 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-32 bg-gray-200 rounded-xl w-full"></div>
-        </div>
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center text-[#D4AF37] font-black tracking-widest uppercase">
+        Decoding The Vault...
       </div>
     );
   }
 
   if (singleError) {
-    return <div className="text-center py-20 text-red-500 font-bold">{singleError}</div>;
+    return <div className="text-center py-20 bg-[#050505] text-red-500 font-bold">{singleError}</div>;
   }
 
   if (!currentProduct) {
-    return <div className="text-center py-20">Product not found.</div>;
+    return <div className="text-center py-20 bg-[#050505] text-white">Artifact not found.</div>;
   }
 
+  // 🚀 FIX 1: Derived State (useEffect ki zaroorat nahi)
+  // Agar user ne kuch select nahi kiya, toh default backend ki pehli value dikhao
   const displayedMainImage = mainImage || currentProduct?.images?.[0] || "https://via.placeholder.com/800";
   const activeColor = selectedColor || currentProduct?.colors?.[0] || "";
+  const activeSize = selectedSize || currentProduct?.sizes?.[0] || null;
+
+  // 🚀 DYNAMIC PRICE CALCULATOR
+  const calculateFinalPrice = () => {
+    let total = currentProduct.basePrice || 0;
+    
+    // Naya logic: ab activeSize use karenge taaki load hote hi price sahi dikhe
+    if (activeSize && activeSize.priceModifier) {
+      total += activeSize.priceModifier;
+    }
+    
+    // Addons ka extra price jodo
+    selectedAddons.forEach(addonName => {
+      const addon = currentProduct.addons?.find(a => a.addonName === addonName);
+      if (addon) total += addon.extraPrice;
+    });
+
+    return total;
+  };
+
+  const finalPrice = calculateFinalPrice();
+
+  // 🚀 FIX 2: Addon Toggle Handler (Ab yeh niche click par use hoga)
+  const toggleAddon = (addonName) => {
+    setSelectedAddons(prev => 
+      prev.includes(addonName) 
+        ? prev.filter(item => item !== addonName) // Pehle se hai toh hatao
+        : [...prev, addonName] // Nahi hai toh add karo
+    );
+  };
 
   const handleMouseMove = (e) => {
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
@@ -62,23 +89,23 @@ const SingleProduct = () => {
   };
 
   return (
-    <div className="bg-white min-h-screen pb-24">
+    <div className="bg-[#050505] min-h-screen pb-24 text-gray-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-20">
         
         <button
           onClick={() => navigate(-1)}
-          className="mb-8 flex items-center text-sm font-semibold text-gray-500 hover:text-black transition-colors"
+          className="mb-8 flex items-center text-xs font-black uppercase tracking-widest text-[#D4AF37] hover:text-[#FCF6BA] transition-colors cursor-pointer"
         >
-          <span className="mr-2">←</span> Back to Collection
+          <span className="mr-2">←</span> Back to Vault
         </button>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
           
+          {/* LEFT: IMAGE SECTION */}
           <div className="relative">
             <div className="md:sticky md:top-24 space-y-6">
-              
               <div 
-                className="aspect-square bg-gray-50 rounded-3xl overflow-hidden border border-gray-100 shadow-2xl relative cursor-crosshair"
+                className="aspect-square bg-[#0a0a0a] rounded-2xl overflow-hidden border border-white/5 shadow-2xl relative cursor-crosshair group"
                 onMouseEnter={() => setIsZooming(true)}
                 onMouseLeave={() => setIsZooming(false)}
                 onMouseMove={handleMouseMove}
@@ -86,8 +113,9 @@ const SingleProduct = () => {
                 <img
                   src={displayedMainImage}
                   alt={currentProduct.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-90"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-transparent opacity-40"></div>
               </div>
 
               <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
@@ -95,25 +123,26 @@ const SingleProduct = () => {
                   <button
                     key={idx}
                     onClick={() => setMainImage(img)}
-                    className={`w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all ${
+                    className={`w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all cursor-pointer ${
                       displayedMainImage === img
-                        ? "border-black scale-105 shadow-md"
-                        : "border-transparent opacity-60 hover:opacity-100"
+                        ? "border-[#D4AF37] scale-105 shadow-[0_0_15px_rgba(212,175,55,0.4)]"
+                        : "border-transparent opacity-50 hover:opacity-100"
                     }`}
                   >
-                    <img src={img} alt="thumbnail" className="w-full h-full object-cover" />
+                    <img src={img} alt={`thumbnail-${idx}`} className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
             </div>
           </div>
 
-          <div className="relative flex flex-col pt-2 md:pt-10">
+          {/* RIGHT: DETAILS SECTION */}
+          <div className="relative flex flex-col pt-2 md:pt-6">
             
-            {/* 🚀 THE ZOOM OVERLAY MAGIC (Height wahi hai, Width ko left-right stretch kar diya) */}
+            {/* ZOOM OVERLAY MAGIC */}
             {isZooming && (
               <div 
-                className="hidden md:block absolute top-0 bottom-0 -left-6 -right-16 lg:-right-24 xl:-right-32 z-50 bg-white pointer-events-none rounded-3xl shadow-2xl border border-gray-100"
+                className="hidden md:block absolute top-0 bottom-0 -left-6 -right-16 lg:-right-24 xl:-right-32 z-50 bg-[#0a0a0a] pointer-events-none rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-[#D4AF37]/30"
                 style={{
                   backgroundImage: `url(${displayedMainImage})`,
                   backgroundSize: '250%', 
@@ -123,36 +152,38 @@ const SingleProduct = () => {
               ></div>
             )}
 
-            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight">
+            <p className="text-[10px] font-black text-[#D4AF37] uppercase tracking-[0.4em] mb-2">Exclusive Artifact</p>
+            <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
               {currentProduct.name}
             </h1>
-            <p className="text-3xl font-light text-black mt-4">
-              ₹{currentProduct.basePrice}
+            
+            {/* 🚀 DYNAMIC MAIN PRICE */}
+            <p className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] mt-4 transition-all duration-300">
+              ₹{finalPrice}
             </p>
 
             <div className="mt-8">
-              <h3 className="text-xs font-bold tracking-widest text-gray-400 uppercase mb-3">
-                The Artpiece
+              <h3 className="text-[10px] font-black tracking-[0.2em] text-gray-500 uppercase mb-3 border-b border-white/5 pb-2">
+                The Masterpiece
               </h3>
-              <p className="text-lg text-gray-600 leading-relaxed">
+              <p className="text-sm text-gray-400 leading-relaxed font-medium">
                 {currentProduct.description}
               </p>
             </div>
 
+            {/* 🎨 COLORS SELECTION */}
             {currentProduct.colors?.length > 0 && (
-              <div className="mt-10">
-                <h3 className="text-xs font-bold tracking-widest text-gray-400 uppercase mb-4">
-                  Edition Color
-                </h3>
-                <div className="flex gap-3">
+              <div className="mt-8">
+                <h3 className="text-[10px] font-black tracking-[0.2em] text-gray-500 uppercase mb-4">Edition Color</h3>
+                <div className="flex flex-wrap gap-3">
                   {currentProduct.colors.map((color, idx) => (
                     <button
                       key={idx}
                       onClick={() => setSelectedColor(color)}
-                      className={`px-5 py-3 rounded-full text-sm font-semibold border-2 transition-all ${
+                      className={`px-5 py-2.5 rounded-sm text-xs font-black uppercase tracking-widest border transition-all cursor-pointer ${
                         activeColor === color
-                          ? "border-black bg-black text-white shadow-lg"
-                          : "border-gray-200 bg-white text-gray-700 hover:border-gray-400"
+                          ? "border-[#D4AF37] bg-[#D4AF37]/10 text-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.2)]"
+                          : "border-white/10 bg-[#121212] text-gray-400 hover:border-white/30"
                       }`}
                     >
                       {color}
@@ -162,71 +193,93 @@ const SingleProduct = () => {
               </div>
             )}
 
-            <hr className="my-10 border-gray-100" />
-
-            <div className="flex items-center gap-6 text-sm text-gray-500 font-medium mb-10">
-              <div className="flex items-center gap-2">
-                <span
-                  className={`w-3 h-3 rounded-full ${
-                    currentProduct.inStock
-                      ? "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]"
-                      : "bg-red-500"
-                  }`}
-                ></span>
-                {currentProduct.inStock
-                  ? "In Stock & Ready to Ship"
-                  : "Currently Unavailable"}
+            {/* 📐 SIZES SELECTION */}
+            {currentProduct.sizes?.length > 0 && (
+              <div className="mt-8">
+                <h3 className="text-[10px] font-black tracking-[0.2em] text-gray-500 uppercase mb-4">Dimensions</h3>
+                <div className="flex flex-wrap gap-3">
+                  {currentProduct.sizes.map((size, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedSize(size)}
+                      className={`px-5 py-2.5 rounded-sm text-xs font-black uppercase tracking-widest border transition-all flex flex-col items-start cursor-pointer ${
+                        activeSize?.sizeLabel === size.sizeLabel
+                          ? "border-[#D4AF37] bg-[#D4AF37]/10 text-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.2)]"
+                          : "border-white/10 bg-[#121212] text-gray-400 hover:border-white/30"
+                      }`}
+                    >
+                      <span>{size.sizeLabel}</span>
+                      {size.priceModifier > 0 && (
+                        <span className="text-[9px] mt-1 opacity-70">+₹{size.priceModifier}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div>•</div>
+            )}
+
+            {/* ✨ ADDONS SELECTION */}
+            {currentProduct.addons?.length > 0 && (
+              <div className="mt-8">
+                <h3 className="text-[10px] font-black tracking-[0.2em] text-gray-500 uppercase mb-4">Enhance Your Artifact</h3>
+                <div className="space-y-3">
+                  {currentProduct.addons.map((addon, idx) => {
+                    const isSelected = selectedAddons.includes(addon.addonName);
+                    return (
+                      <div 
+                        key={idx} 
+                        onClick={() => toggleAddon(addon.addonName)}
+                        className={`flex items-center justify-between p-4 rounded-sm border cursor-pointer transition-all ${
+                          isSelected ? "border-[#D4AF37] bg-[#D4AF37]/5" : "border-white/5 bg-[#121212] hover:border-white/20"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-4 h-4 rounded-sm border flex items-center justify-center ${isSelected ? "border-[#D4AF37] bg-[#D4AF37]" : "border-gray-600 bg-transparent"}`}>
+                             {isSelected && <span className="text-black text-[10px]">✔</span>}
+                          </div>
+                          <span className={`text-sm font-bold ${isSelected ? "text-[#D4AF37]" : "text-gray-300"}`}>{addon.addonName}</span>
+                        </div>
+                        <span className="text-xs font-black text-gray-400">+₹{addon.extraPrice}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <hr className="my-10 border-white/5" />
+
+            <div className="flex flex-wrap items-center gap-6 text-xs font-black tracking-widest uppercase text-gray-500 mb-10">
+              <div className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${currentProduct.inStock ? "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]" : "bg-red-500"}`}></span>
+                {currentProduct.inStock ? <span className="text-green-500">In Stock</span> : <span className="text-red-500">Sold Out</span>}
+              </div>
+              <div>|</div>
               <div>Lead Time: {currentProduct.leadTimeDays} Days</div>
             </div>
 
             <button
               disabled={!currentProduct.inStock}
-              // onClick={() => {
-              //   dispatch(
-              //     addToCart({
-              //       _id: currentProduct._id,
-              //       name: currentProduct.name,
-              //       basePrice: currentProduct.basePrice,
-              //       image: displayedMainImage,
-              //       selectedColor: activeColor || null,
-              //     }),
-              //   );
-              //   toast.success(`${currentProduct.name} added to cart! 🛍️`);
-              // }}
               onClick={async () => {
                 try {
-                  // 🚨 FIX: payload map to productId standard as backend validates
                   await dispatch(
                     addToCart({
                       productId: currentProduct._id, 
                       quantity: 1,
-                      selectedSize: activeColor ? "Standard" : "24x24 Inches", // Example mapping
+                      selectedSize: activeSize?.sizeLabel || "Standard", 
                       selectedColor: activeColor || "Default",
-                      selectedAddons: [] // If addons not dynamic, empty array array validations require sort check
+                      selectedAddons: selectedAddons 
                     })
                   ).unwrap();
-                  toast.success(`${currentProduct.name} added to cart! 🛍️`);
+                  toast.success(`${currentProduct.name} forged into your vault! 💎`);
                 } catch (err) {
                   toast.error(err || 'Failed to add item to Cart');
                 }
               }}
-              className="w-full py-5 bg-black text-white text-lg font-bold rounded-2xl hover:bg-gray-900 hover:shadow-2xl hover:-translate-y-1 transform transition-all duration-300 disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none"
+              className="w-full py-5 bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] text-black text-sm font-black uppercase tracking-[0.2em] rounded-sm hover:scale-[1.02] transform transition-all duration-300 disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_40px_rgba(212,175,55,0.6)] cursor-pointer"
             >
-              {currentProduct.inStock
-                ? `Add to Cart — ₹${currentProduct.basePrice}`
-                : "Sold Out"}
+              {currentProduct.inStock ? `Add to Vault — ₹${finalPrice}` : "Currently Unavailable"}
             </button>
-
-            <div className="mt-8 grid grid-cols-2 gap-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              <div className="flex items-center gap-2">
-                <span className="text-black text-lg">✦</span> Handcrafted Quality
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-black text-lg">✦</span> Secure Checkout
-              </div>
-            </div>
           </div>
         </div>
       </div>
