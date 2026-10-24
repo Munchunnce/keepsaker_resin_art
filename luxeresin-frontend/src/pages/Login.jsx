@@ -96,7 +96,7 @@ const Login = () => {
                                 Password
                             </label>
                             <a href="#" className="text-[10px] font-bold text-gray-400 hover:text-[#D4AF37] transition-colors uppercase tracking-widest">
-                                Lost Keys?
+                                Forgot password?
                             </a>
                         </div>
                         <input
@@ -124,7 +124,7 @@ const Login = () => {
                     <p className="text-xs text-gray-300 font-medium drop-shadow-sm">
                         New to the Vault?{' '}
                         <Link to="/register" className="text-[#D4AF37] font-black hover:text-[#FCF6BA] hover:underline transition-colors tracking-widest drop-shadow-[0_0_8px_rgba(212,175,55,0.6)]">
-                            FORGE IDENTITY
+                            Create an account
                         </Link>
                     </p>
                 </div>
