@@ -126,7 +126,7 @@ const AdminDashboard = () => {
             <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
                 <div className="p-6 border-b border-white/5 bg-[#0d0d0d] flex justify-between items-center">
                     <h3 className="text-lg font-bold text-white tracking-wide">Live Order Stream</h3>
-                    <span className="text-[10px] text-gray-500 tracking-[0.2em] uppercase font-black">Recent 5 Transactions</span>
+                    <span className="text-[10px] text-gray-500 tracking-[0.2em] uppercase font-black">Recent 6 Transactions</span>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm text-gray-400">
@@ -139,7 +139,7 @@ const AdminDashboard = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
-                            {[...safeOrders].reverse().slice(0, 5).map((order) => (
+                            {[...safeOrders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 6).map((order) => (
                                 <tr key={order._id} className="hover:bg-white/[0.02] transition-colors">
                                     <td className="px-6 py-4 font-bold text-white">#{order._id.slice(-6).toUpperCase()}</td>
                                     <td className="px-6 py-4">{order.shippingAddress?.fullName || 'Guest'}</td>

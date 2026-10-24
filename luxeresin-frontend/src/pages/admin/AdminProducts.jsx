@@ -77,7 +77,7 @@ const AdminProducts = () => {
                                             <div className="w-12 h-12 rounded-md bg-[#1a1a1a] border border-white/10 overflow-hidden flex-shrink-0 opacity-80 group-hover:opacity-100 transition-opacity">
                                                 {/* Backend image URL ya placeholder */}
                                                 <img 
-                                                    src={product.images?.[0]?.url || product.image || 'https://via.placeholder.com/150'} 
+                                                    src={product.images?.[0] || 'https://via.placeholder.com/150'} 
                                                     alt={product.name} 
                                                     className="w-full h-full object-cover" 
                                                 />
@@ -96,7 +96,7 @@ const AdminProducts = () => {
 
                                     {/* PRICE */}
                                     <td className="px-6 py-5 font-black text-[#D4AF37] text-lg tracking-tight">
-                                        ₹{product.price}
+                                        ₹{product.basePrice}
                                     </td>
 
                                     {/* STOCK STATUS */}
@@ -113,7 +113,29 @@ const AdminProducts = () => {
                                     </td>
 
                                     {/* ACTIONS */}
+                                    {/* ACTIONS */}
                                     <td className="px-6 py-5 text-right">
+                                        <div className="flex items-center justify-end gap-4">
+                                            {/* 🚀 NAYA: EDIT BUTTON */}
+                                            <button 
+                                                onClick={() => navigate('/admin/products/new', { state: { editProduct: product } })}
+                                                className="p-2 text-gray-500 hover:text-blue-400 transition-colors cursor-pointer text-lg" 
+                                                title="Edit Artifact"
+                                            >
+                                                ✏️
+                                            </button>
+                                            
+                                            {/* PURANA: DELETE BUTTON */}
+                                            <button 
+                                                onClick={() => handleDelete(product._id)} 
+                                                className="p-2 text-gray-500 hover:text-red-500 transition-colors cursor-pointer text-lg" 
+                                                title="Delete Artifact"
+                                            >
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    </td>
+                                    {/* <td className="px-6 py-5 text-right">
                                         <div className="flex items-center justify-end gap-3">
                                             <button 
                                                 onClick={() => handleDelete(product._id)} 
@@ -123,7 +145,7 @@ const AdminProducts = () => {
                                                 🗑️
                                             </button>
                                         </div>
-                                    </td>
+                                    </td> */}
                                 </tr>
                             ))}
 

@@ -8,7 +8,10 @@ export const {
     DEBUG_MODE,
     MONGO_URI,
     JWT_SECRET,
-    REFRESH_SECRET
+    REFRESH_SECRET,
+    CLOUDINARY_CLOUD_NAME,
+    CLOUDINARY_API_KEY,
+    CLOUDINARY_API_SECRET
 } = process.env;
 
 

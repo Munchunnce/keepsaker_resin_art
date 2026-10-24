@@ -1,58 +1,98 @@
 import { Product, Category } from '../../models/index.js';
 import CustomErrorHandler from '../../services/CustomErrorHandler.js';
 import Joi from 'joi';
-import crypto from 'crypto'; // Node.js ka inbuilt security module
+import crypto from 'crypto';
+import { v2 as cloudinary } from 'cloudinary';
+import fs from 'fs';
+
+// 🚀 NAYA: Aapki config file se secret keys import ki hain
+// (Agar aapki config file kisi aur folder mein hai, toh path thoda adjust kar lijiyega)
+import { 
+    CLOUDINARY_CLOUD_NAME, 
+    CLOUDINARY_API_KEY, 
+    CLOUDINARY_API_SECRET 
+} from '../../config/index.js'; 
+
+// 🚀 CLOUDINARY CONFIG (Ab direct config file se data aayega)
+cloudinary.config({
+    cloud_name: CLOUDINARY_CLOUD_NAME,
+    api_key: CLOUDINARY_API_KEY,
+    api_secret: CLOUDINARY_API_SECRET
+});
 
 const productController = {
     async store(req, res, next) {
-        // 1. FAANG-Level Strict Data Validation (No garbage data allowed)
-        const productSchema = Joi.object({
-            name: Joi.string().trim().required().max(100),
-            description: Joi.string().required(),
-            // Regex to strictly allow ONLY valid 24-character MongoDB ObjectIDs
-            category: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required().messages({
-                'string.pattern.base': 'Invalid Category ID format. System protected from crash.',
-            }),
-            basePrice: Joi.number().min(1).required(),
-            discountPrice: Joi.number().min(0).optional(),
-            discountPercentage: Joi.number().min(0).max(100).optional(),
-            // Check that images array contains valid URLs
-            images: Joi.array().items(Joi.string().uri()).min(1).required(), 
-            colors: Joi.array().items(Joi.string().trim()).optional(),
-            sizes: Joi.array().items(
-                Joi.object({
-                    sizeLabel: Joi.string().required(),
-                    priceModifier: Joi.number().min(0).default(0)
-                })
-            ).optional(),
-            addons: Joi.array().items(
-                Joi.object({
-                    addonName: Joi.string().required(),
-                    extraPrice: Joi.number().min(0).default(0)
-                })
-            ).optional(),
-            leadTimeDays: Joi.number().min(1).max(30).default(5), // Minimum 1 day, max 30 days
-            inStock: Joi.boolean().default(true)
-        });
-
-        const { error, value } = productSchema.validate(req.body);
-        if (error) return next(error);
-
         try {
-            // 2. ORPHAN PREVENTION: Check if the category actually exists in the database
-            const categoryExists = await Category.findById(value.category);
-            if (!categoryExists) {
-                return next(CustomErrorHandler.notFound('Category not found! Cannot add product to a non-existent category.'));
+            // 1. FILE CHECK
+            if (!req.file) {
+                return next(CustomErrorHandler.badRequest('Artifact image is strictly required for the vault!'));
             }
 
-            // 3. BULLETPROOF SLUG GENERATION: Never crash on duplicate names
-            // Base slug: 'radhe-krishna-frame'
+            // 2. CLOUDINARY UPLOAD
+            const cloudResult = await cloudinary.uploader.upload(req.file.path, {
+                folder: 'luxeresin_artifacts',
+            });
+
+            // 3. SERVER CLEANUP
+            fs.unlinkSync(req.file.path);
+
+            // 4. FORMAT DATA
+            const formattedBody = {
+                ...req.body,
+                basePrice: Number(req.body.basePrice),
+                discountPrice: Number(req.body.discountPrice) || 0,
+                discountPercentage: Number(req.body.discountPercentage) || 0,
+                leadTimeDays: Number(req.body.leadTimeDays) || 7,
+                inStock: Number(req.body.stock) > 0 ? true : false,
+                images: [cloudResult.secure_url],
+                colors: req.body.colors ? JSON.parse(req.body.colors) : [],
+                sizes: req.body.sizes ? JSON.parse(req.body.sizes) : [],
+                addons: req.body.addons ? JSON.parse(req.body.addons) : []
+            };
+
+            // 5. VALIDATION
+            const productSchema = Joi.object({
+                name: Joi.string().trim().required().max(100),
+                description: Joi.string().required(),
+                category: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required().messages({
+                    'string.pattern.base': 'Invalid Category ID format.',
+                }),
+                basePrice: Joi.number().min(1).required(),
+                discountPrice: Joi.number().min(0).optional(),
+                discountPercentage: Joi.number().min(0).max(100).optional(),
+                images: Joi.array().items(Joi.string().uri()).min(1).required(), 
+                colors: Joi.array().items(Joi.string().trim()).optional(),
+                sizes: Joi.array().items(
+                    Joi.object({
+                        sizeLabel: Joi.string().required(),
+                        priceModifier: Joi.number().min(0).default(0)
+                    })
+                ).optional(),
+                addons: Joi.array().items(
+                    Joi.object({
+                        addonName: Joi.string().required(),
+                        extraPrice: Joi.number().min(0).default(0)
+                    })
+                ).optional(),
+                leadTimeDays: Joi.number().min(1).max(30).default(5),
+                inStock: Joi.boolean().default(true)
+            }).unknown(); 
+
+            const { error, value } = productSchema.validate(formattedBody);
+            if (error) return next(error);
+
+            // 6. ORPHAN PREVENTION
+            const categoryExists = await Category.findById(value.category);
+            if (!categoryExists) {
+                return next(CustomErrorHandler.notFound('Category not found!'));
+            }
+
+            // 7. SLUG GENERATION
             let baseSlug = value.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-            // Append a 4-character random hex string (e.g., 'a8b2') for absolute uniqueness
             const randomStr = crypto.randomBytes(2).toString('hex'); 
             const generatedSlug = `${baseSlug}-${randomStr}`;
 
-            // 4. Data Insertion
+            // 8. DB INSERTION
             const product = new Product({
                 name: value.name,
                 slug: generatedSlug,
@@ -71,7 +111,7 @@ const productController = {
 
             const savedProduct = await product.save();
 
-            // 5. Professional Response
+            // 9. RESPONSE
             return res.status(201).json({
                 success: true,
                 message: 'Product launched successfully!',
@@ -79,62 +119,57 @@ const productController = {
             });
 
         } catch (err) {
-            // 6. Failsafe Error Catching (DB timeout, etc.)
+            // FAILSAFE CLEANUP
+            if (req.file && fs.existsSync(req.file.path)) {
+                fs.unlinkSync(req.file.path);
+            }
             return next(err);
         }
     },
-    // --- GET ALL PRODUCTS (The World-Class Masterpiece) ---
+
+    // --- GET ALL PRODUCTS ---
     async index(req, res, next) {
         try {
-            // 1. URL se queries nikalna (with default values for pagination)
             let { page = 1, limit = 12, search, category, sort, minPrice, maxPrice } = req.query;
 
-            // 2. Dynamic Query Engine
-            let filter = { isActive: true }; // SECURITY: Sirf Active products dikhao public ko!
+            let filter = { isActive: true };
 
-            // Text Search (Name mein search karna, case-insensitive)
             if (search) {
                 filter.name = { $regex: search, $options: 'i' }; 
             }
 
-            // Category Filter
             if (category) {
                 filter.category = category;
             }
 
-            // Price Range Filter (e.g. ₹500 se ₹2000 tak)
             if (minPrice || maxPrice) {
                 filter.basePrice = {};
-                if (minPrice) filter.basePrice.$gte = Number(minPrice); // Greater than or equal
-                if (maxPrice) filter.basePrice.$lte = Number(maxPrice); // Less than or equal
+                if (minPrice) filter.basePrice.$gte = Number(minPrice);
+                if (maxPrice) filter.basePrice.$lte = Number(maxPrice);
             }
 
-            // 3. Dynamic Sorting Engine
-            let sortOption = { createdAt: -1 }; // Default: Naye products pehle dikhao
+            let sortOption = { createdAt: -1 };
             if (sort === 'price_low') sortOption = { basePrice: 1 };
             if (sort === 'price_high') sortOption = { basePrice: -1 };
             if (sort === 'top_rated') sortOption = { averageRating: -1 };
 
-            // 4. Pagination Math
             const skip = (Number(page) - 1) * Number(limit);
 
-            // 5. The Magic Execution (Parallel Processing for Ultra-Fast Response)
             const [products, totalProducts] = await Promise.all([
                 Product.find(filter)
-                    .populate('category', 'name slug') // FAANG Trick: Category ka naam automatically le aao!
-                    .select('-__v') // Database ka kachra hide karo
+                    .populate('category', 'name slug')
+                    .select('-__v')
                     .sort(sortOption)
                     .skip(skip)
                     .limit(Number(limit)),
-                Product.countDocuments(filter) // Total products kitne hain (Pagination ke liye zaroori)
+                Product.countDocuments(filter)
             ]);
 
-            // 6. Pro-Level Response format for Frontend
             return res.status(200).json({
                 success: true,
                 message: 'Products fetched successfully',
                 data: products,
-                meta: { // Metadata for Pagination UI
+                meta: {
                     totalProducts,
                     currentPage: Number(page),
                     totalPages: Math.ceil(totalProducts / Number(limit)),
@@ -146,23 +181,20 @@ const productController = {
             return next(err);
         }
     },
-    // 3. GET SINGLE PRODUCT (By Slug for SEO)
+
+    // 3. GET SINGLE PRODUCT
     async show(req, res, next) {
         try {
-            // URL se slug nikalna (e.g., radhe-krishna-3d-geode-frame-47a2)
             const { slug } = req.params;
 
-            // Product dhoondhna jo active ho aur us slug se match kare
             const product = await Product.findOne({ slug, isActive: true })
                 .populate('category', 'name slug')
                 .select('-__v');
 
-            // Agar koi galat link daal de ya product delete/inactive ho gaya ho
             if (!product) {
                 return next(CustomErrorHandler.notFound('Product not found or currently unavailable!'));
             }
 
-            // Success Response
             return res.status(200).json({
                 success: true,
                 message: 'Product details fetched successfully',
@@ -173,12 +205,12 @@ const productController = {
             return next(err);
         }
     },
-    // 4. UPDATE PRODUCT (Admin Only)
+
+    // 4. UPDATE PRODUCT
     async update(req, res, next) {
         try {
             const { id } = req.params;
 
-            // Update ke liye validation (Saare fields optional hain kyunki zaroori nahi admin sab kuch update kare)
             const updateSchema = Joi.object({
                 name: Joi.string().trim().max(100),
                 description: Joi.string(),
@@ -203,7 +235,6 @@ const productController = {
             const { error, value } = updateSchema.validate(req.body);
             if (error) return next(error);
 
-            // Product dhoondho aur update karo (new: true return karta hai updated data)
             const updatedProduct = await Product.findByIdAndUpdate(id, value, { new: true });
 
             if (!updatedProduct) {
@@ -220,13 +251,12 @@ const productController = {
             return next(err);
         }
     },
-    // 5. DELETE PRODUCT (Admin Only)
+
+    // 5. DELETE PRODUCT
     async destroy(req, res, next) {
         try {
             const { id } = req.params;
 
-            // ⚠️ Pro Tip: Real E-commerce mein products hamesha ke liye delete nahi karte (Soft Delete).
-            // Hum Product ko permanently udane ki jagah bas findOneAndDelete use kar rahe hain.
             const product = await Product.findByIdAndDelete(id);
 
             if (!product) {
