@@ -37,6 +37,7 @@ const CategoryShowcase = () => {
                     <div 
                         key={cat._id}
                         onClick={() => navigate(`/category/${cat.slug}`)}
+                        // onClick={() => navigate(`/products?category=${cat._id}`)}
                         className="group relative h-96 rounded-2xl overflow-hidden border border-white/5 cursor-pointer shadow-2xl transition-all duration-700 hover:-translate-y-2 hover:border-[#D4AF37]/50"
                     >
                         {/* Background Category Image */}
