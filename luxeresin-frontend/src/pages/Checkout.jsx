@@ -218,7 +218,7 @@ const Checkout = () => {
                   </div>
                 </div>
 
-                {/* 🚀 PAYMENT METHOD SELECTION OPTIONS */}
+                {/* PAYMENT METHOD SELECTION OPTIONS */}
                 <div className="pt-8 mt-8 border-t border-gray-100">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6">
                     Payment Method
