@@ -112,7 +112,7 @@ const Checkout = () => {
         {/* <h1 className="text-4xl font-extrabold text-gray-900 mb-10 tracking-tight">
           Secure Checkout
         </h1> */}
-        {/* 🚀 3D GOLDEN GRADIENT HEADING */}
+        {/* 3D GOLDEN GRADIENT HEADING */}
         <div className="mb-10">
           <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] tracking-tight drop-shadow-[0_2px_10px_rgba(212,175,55,0.2)]">
             Secure Checkout
