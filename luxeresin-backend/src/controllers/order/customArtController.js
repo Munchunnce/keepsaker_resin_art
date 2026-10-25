@@ -43,7 +43,7 @@ const customArtController = {
         }
     },
 
-    // 🚀 2. NAYA: CUSTOMER APNI REQUESTS DEKHEGA (Jo pehle miss ho gaya tha)
+    //  2. NAYA: CUSTOMER APNI REQUESTS DEKHEGA (Jo pehle miss ho gaya tha)
     async getMyRequests(req, res, next) {
         try {
             // Sirf current logged-in user ki requests aayengi
@@ -56,23 +56,32 @@ const customArtController = {
         }
     },
 
-    // Customer Quote Accept Karega (UPI Advance ke liye)
+    // Customer Address + UPI UTR Number ke sath Order Confirm karega
     async acceptQuote(req, res, next) {
         try {
-            // Customer sirf apni hi request accept kar sakta hai
+            const { shippingAddress, utrNumber, advancePaid } = req.body;
+
+            if (!utrNumber || utrNumber.trim().length < 6) {
+                return res.status(400).json({ success: false, message: 'Please enter a valid UPI UTR / Reference Number!' });
+            }
+
             const request = await CustomArtRequest.findOne({ _id: req.params.id, user: req.user._id });
             
             if (!request) {
                 return res.status(404).json({ success: false, message: 'Request not found!' });
             }
 
-            // Status update karke AWAITING_ADVANCE kar diya
-            request.status = 'AWAITING_ADVANCE'; 
+            // Status aur Payment details save karein
+            request.status = 'ADVANCE_PAID'; 
+            request.shippingAddress = shippingAddress;
+            request.utrNumber = utrNumber;
+            request.advancePaid = advancePaid || Math.round(request.estimatedPrice / 2);
+
             await request.save();
 
             res.status(200).json({ 
                 success: true, 
-                message: 'Quote Accepted! 💎 Our team will WhatsApp you the UPI QR code for the 50% advance.', 
+                message: 'Payment Submitted Successfully! 🎉 Your bespoke order is now confirmed.', 
                 data: request 
             });
         } catch (error) {

@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../../services/axiosInstance';
 
-// 1. Customer Request Bhejne ka Action
+// 1. Customer Request Bheje
 export const submitCustomRequest = createAsyncThunk(
     'customArt/submitRequest',
     async (formData, { rejectWithValue }) => {
@@ -14,7 +14,7 @@ export const submitCustomRequest = createAsyncThunk(
     }
 );
 
-// 2. NAYA: Customer ki apni requests fetch karne ka Action
+// 2. Customer Apni Requests Dekhe
 export const fetchMyCustomRequests = createAsyncThunk(
     'customArt/fetchMyRequests',
     async (_, { rejectWithValue }) => {
@@ -27,7 +27,20 @@ export const fetchMyCustomRequests = createAsyncThunk(
     }
 );
 
-// 3. Admin Saari Requests Fetch Karega
+//  UPDATED: Customer Address + UTR Number ke sath Quote Accept Karega
+export const acceptCustomArtQuote = createAsyncThunk(
+    'customArt/acceptQuote',
+    async ({ id, paymentData }, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.put(`/custom-art/${id}/accept`, paymentData);
+            return response.data.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to confirm order');
+        }
+    }
+);
+
+// 4. Admin Saari Requests Dekhe
 export const fetchAdminCustomRequests = createAsyncThunk(
     'customArt/fetchAdminRequests',
     async (_, { rejectWithValue }) => {
@@ -40,7 +53,7 @@ export const fetchAdminCustomRequests = createAsyncThunk(
     }
 );
 
-// 4. Admin Status aur Price update karne ke liye
+// 5. Admin Status/Price Update Kare
 export const updateAdminCustomRequest = createAsyncThunk(
     'customArt/updateRequest',
     async ({ id, updateData }, { rejectWithValue }) => {
@@ -56,8 +69,8 @@ export const updateAdminCustomRequest = createAsyncThunk(
 const customArtSlice = createSlice({
     name: 'customArt',
     initialState: {
-        requests: [],  // Admin ke liye
-        myRequests: [],  // Sirf Customer ke liye
+        requests: [], 
+        myRequests: [], 
         loading: false,
         error: null,
     },
@@ -68,54 +81,40 @@ const customArtSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            // Submit Request
-            .addCase(submitCustomRequest.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
+            .addCase(submitCustomRequest.pending, (state) => { state.loading = true; state.error = null; })
             .addCase(submitCustomRequest.fulfilled, (state, action) => {
                 state.loading = false;
-                // Nayi request ko dono list ke shuru mein add kar denge
-                state.requests.unshift(action.payload);
                 state.requests.unshift(action.payload); 
+                state.myRequests.unshift(action.payload);
             })
-            .addCase(submitCustomRequest.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload;
-            })
-            //  Fetch My Requests (Customer)
-            .addCase(fetchMyCustomRequests.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
+            .addCase(submitCustomRequest.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
+            
+            .addCase(fetchMyCustomRequests.pending, (state) => { state.loading = true; state.error = null; })
             .addCase(fetchMyCustomRequests.fulfilled, (state, action) => {
                 state.loading = false;
-                state.myRequests = action.payload; // Customer ka data yahan save hoga
+                state.myRequests = action.payload; 
             })
-            .addCase(fetchMyCustomRequests.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload;
+            .addCase(fetchMyCustomRequests.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
+
+            //  Accept Quote handle karein (UI turant update hoga)
+            .addCase(acceptCustomArtQuote.fulfilled, (state, action) => {
+                const index = state.myRequests.findIndex(req => req._id === action.payload._id);
+                if (index !== -1) {
+                    state.myRequests[index] = action.payload; 
+                }
             })
-            
-            // Fetch Admin Requests
-            .addCase(fetchAdminCustomRequests.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
+
+            .addCase(fetchAdminCustomRequests.pending, (state) => { state.loading = true; state.error = null; })
             .addCase(fetchAdminCustomRequests.fulfilled, (state, action) => {
                 state.loading = false;
                 state.requests = action.payload;
             })
-            .addCase(fetchAdminCustomRequests.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload;
-            })
+            .addCase(fetchAdminCustomRequests.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
             
-            // Update Request ko handle kiya taaki UI turant update ho
             .addCase(updateAdminCustomRequest.fulfilled, (state, action) => {
                 const index = state.requests.findIndex(req => req._id === action.payload._id);
                 if (index !== -1) {
-                    state.requests[index] = action.payload; // Purane data ko naye (updated) data se replace kar diya
+                    state.requests[index] = action.payload; 
                 }
             });
     }

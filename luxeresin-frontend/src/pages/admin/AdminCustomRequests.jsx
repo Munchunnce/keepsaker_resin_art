@@ -78,6 +78,7 @@ const RequestCard = ({ req }) => {
                             <option value="PENDING">Pending (Need to Review)</option>
                             <option value="REVIEWING">Reviewing</option>
                             <option value="ACCEPTED">Accepted (Waiting for Payment)</option>
+                            <option value="AWAITING_ADVANCE">Awaiting Advance (UPI Sent)</option>
                             <option value="IN_MAKING">In Making (Work Started)</option>
                             <option value="SHIPPED">Shipped</option>
                             <option value="DELIVERED">Delivered</option>
