@@ -177,7 +177,7 @@ const CustomArtRequest = () => {
                             </form>
                         </div>
 
-                        {/* 🚀 FIXED: IMAGE AUR BADI KAR DI (max-w-2xl aur max-h-[600px] kar diya) */}
+                        {/* FIXED: IMAGE AUR BADI KAR DI (max-w-2xl aur max-h-[600px] kar diya) */}
                         <div className={`absolute inset-0 z-10 flex flex-col items-center justify-center transition-all duration-500 pointer-events-none ${isHovering && previewUrl ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
                             <div className="bg-white p-4 rounded-2xl shadow-[0_30px_60px_rgba(0,0,0,0.2)] border border-[#D4AF37]/50 max-w-2xl w-full flex flex-col items-center">
                                 <p className="text-[10px] font-black text-[#D4AF37] uppercase tracking-[0.2em] mb-4">Original Uncropped Image</p>
