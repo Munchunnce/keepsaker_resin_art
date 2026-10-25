@@ -26,6 +26,8 @@ import Shop from './pages/Shop.jsx';
 import About from './pages/About.jsx';
 import CategoryProducts from './pages/CategoryProducts.jsx';
 import CategoryShowcase from './components/categoryShowcase/CategoryShowcase.jsx';
+import CustomArtRequest from './pages/CustomArtRequest.jsx';
+import AdminCustomRequests from './pages/admin/AdminCustomRequests.jsx';
 
 // Baaki bache hue Dummy Pages (Inko baad mein asali page se replace karenge)
 // const Home = () => <h1>Home Page (Public)</h1>;
@@ -71,6 +73,7 @@ function App() {
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/my-orders" element={<MyOrders />} />
+            <Route path="/custom-art" element={<CustomArtRequest />} />
         </Route>
 
         {/* 👑 ADMIN ONLY ROUTES (Sirf Boss logo ke liye) */}
@@ -81,6 +84,7 @@ function App() {
                 <Route path="/admin/products" element={<AdminProducts />} />
                 <Route path="/admin/products/new" element={<AdminProductForm />} />
                 <Route path="/admin/coupons" element={<AdminCoupons />} />
+                <Route path="/admin/custom-requests" element={<AdminCustomRequests />} />
             </Route>
         </Route>
 

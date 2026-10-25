@@ -72,6 +72,9 @@ router.delete('/categories/:id', [auth, admin], categoryController.destroy);
 // POST: Customer apni photo aur detail submit karega
 router.post('/custom-art', auth, upload.single('image'), customArtController.submitRequest);
 
+// Customer apni khud ki requests fetch karega (Yahan 'auth' lagaya hai)
+router.get('/custom-art/my-requests', auth, customArtController.getMyRequests);
+
 // GET: Admin saari requests check karega
 router.get('/admin/custom-art', auth, admin, customArtController.getAllRequests);
 

@@ -59,6 +59,9 @@ const Navbar = () => {
             <Link to="/categories" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-300 hover:text-[#D4AF37] transition-colors">
               Categories
             </Link>
+            <Link to="/custom-art" className="text-[10px] font-black uppercase tracking-[0.2em] text-[#D4AF37] hover:text-[#FCF6BA] transition-all drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]">
+              Bespoke Art
+            </Link>
             <Link to="/about" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-300 hover:text-[#D4AF37] transition-colors">
               About Us
             </Link>

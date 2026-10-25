@@ -18,11 +18,13 @@ const customArtController = {
             // Multer ka temporary file delete karein
             fs.unlinkSync(req.file.path);
 
-            const { theme, dimensions, description } = req.body;
+            const { theme, shape, customText, dimensions, description } = req.body;
 
             const newRequest = new CustomArtRequest({
                 user: req.user._id,
                 theme,
+                shape,
+                customText,
                 dimensions,
                 description,
                 referenceImage: cloudResult.secure_url
@@ -41,7 +43,20 @@ const customArtController = {
         }
     },
 
-    // 2. ADMIN SAARI REQUESTS DEKHEGA
+    // 🚀 2. NAYA: CUSTOMER APNI REQUESTS DEKHEGA (Jo pehle miss ho gaya tha)
+    async getMyRequests(req, res, next) {
+        try {
+            // Sirf current logged-in user ki requests aayengi
+            const requests = await CustomArtRequest.find({ user: req.user._id })
+                .sort({ createdAt: -1 }); 
+            
+            res.status(200).json({ success: true, data: requests });
+        } catch (error) {
+            return next(error);
+        }
+    },
+
+    // 3. ADMIN SAARI REQUESTS DEKHEGA
     async getAllRequests(req, res, next) {
         try {
             const requests = await CustomArtRequest.find()
@@ -54,7 +69,7 @@ const customArtController = {
         }
     },
 
-    // 3. ADMIN STATUS AUR PRICE UPDATE KAREGA
+    // 4. ADMIN STATUS AUR PRICE UPDATE KAREGA
     async updateRequest(req, res, next) {
         try {
             const { status, estimatedPrice, adminNotes } = req.body;
