@@ -75,6 +75,9 @@ router.post('/custom-art', auth, upload.single('image'), customArtController.sub
 // Customer apni khud ki requests fetch karega (Yahan 'auth' lagaya hai)
 router.get('/custom-art/my-requests', auth, customArtController.getMyRequests);
 
+// Customer Quote Accept Karega (Auth required, but admin nahi)
+router.put('/custom-art/:id/accept', auth, customArtController.acceptQuote);
+
 // GET: Admin saari requests check karega
 router.get('/admin/custom-art', auth, admin, customArtController.getAllRequests);
 

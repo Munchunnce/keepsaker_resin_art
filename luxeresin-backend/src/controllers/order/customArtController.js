@@ -56,6 +56,30 @@ const customArtController = {
         }
     },
 
+    // Customer Quote Accept Karega (UPI Advance ke liye)
+    async acceptQuote(req, res, next) {
+        try {
+            // Customer sirf apni hi request accept kar sakta hai
+            const request = await CustomArtRequest.findOne({ _id: req.params.id, user: req.user._id });
+            
+            if (!request) {
+                return res.status(404).json({ success: false, message: 'Request not found!' });
+            }
+
+            // Status update karke AWAITING_ADVANCE kar diya
+            request.status = 'AWAITING_ADVANCE'; 
+            await request.save();
+
+            res.status(200).json({ 
+                success: true, 
+                message: 'Quote Accepted! 💎 Our team will WhatsApp you the UPI QR code for the 50% advance.', 
+                data: request 
+            });
+        } catch (error) {
+            return next(error);
+        }
+    },
+
     // 3. ADMIN SAARI REQUESTS DEKHEGA
     async getAllRequests(req, res, next) {
         try {
