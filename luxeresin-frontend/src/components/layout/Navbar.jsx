@@ -56,7 +56,7 @@ const Navbar = () => {
             <Link to="/products" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-300 hover:text-[#D4AF37] transition-colors">
               Shop
             </Link>
-            <Link to="/categories" className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-300 hover:text-[#D4AF37] transition-colors">
+            <Link to="/categories" className="text-[10px] font-black uppercase tracking-[0.2em] text-[#D4AF37] hover:text-[#FCF6BA] transition-all drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]">
               Categories
             </Link>
             <Link to="/custom-art" className="text-[10px] font-black uppercase tracking-[0.2em] text-[#D4AF37] hover:text-[#FCF6BA] transition-all drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]">

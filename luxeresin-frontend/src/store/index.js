@@ -4,6 +4,7 @@ import productReducer from '../features/products/productSlice';
 import cartReducer from '../features/cart/cartSlice';
 import orderReducer from '../features/order/orderSlice';
 import customArtReducer from '../features/customArt/customArtSlice';
+import couponReducer from '../features/coupon/couponSlice';
 
 
 const store = configureStore({
@@ -13,6 +14,7 @@ const store = configureStore({
         cart: cartReducer,
         order: orderReducer,
         customArt: customArtReducer,
+        coupon: couponReducer,
     },
     // PRO-SECURITY FIX: Production mein React DevTools block kar do!
     devTools: import.meta.env.VITE_NODE_ENV !== 'production', 
