@@ -60,6 +60,8 @@ router.get('/product/:productId/reviews', reviewController.getProductReviews);
 
 // --- Coupon Routes ---
 router.post('/admin/coupon', [auth, admin], couponController.createCoupon);
+router.get('/admin/coupon', auth, admin, couponController.getAllCoupons);
+router.delete('/admin/coupon/:id', auth, admin, couponController.deleteCoupon);
 router.post('/cart/apply-coupon', auth, couponController.applyCoupon);
 
 // --- Category Routes (Public & Admin) ---

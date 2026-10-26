@@ -3,7 +3,7 @@ import CustomErrorHandler from '../../services/CustomErrorHandler.js';
 import Joi from 'joi';
 
 const couponController = {
-    // 1. CREATE COUPON
+    // 1. CREATE COUPON (Admin)
     async createCoupon(req, res, next) {
         const couponSchema = Joi.object({
             code: Joi.string().trim().uppercase().required(),
@@ -31,20 +31,47 @@ const couponController = {
         }
     },
 
-    // 2. APPLY COUPON (With Live FAANG Math)
+    // 🚀 2. GET ALL COUPONS (Admin - Page refresh par saare coupons dikhane ke liye)
+    async getAllCoupons(req, res, next) {
+        try {
+            const coupons = await Coupon.find().sort({ createdAt: -1 });
+            return res.status(200).json({
+                success: true,
+                data: coupons
+            });
+        } catch (err) {
+            return next(err);
+        }
+    },
+
+    // 🚀 3. DELETE COUPON (Admin - Expired ya galat coupon hatane ke liye)
+    async deleteCoupon(req, res, next) {
+        try {
+            const coupon = await Coupon.findByIdAndDelete(req.params.id);
+            if (!coupon) return next(CustomErrorHandler.notFound('Coupon not found.'));
+
+            return res.status(200).json({
+                success: true,
+                message: 'Coupon deleted successfully!',
+                id: req.params.id
+            });
+        } catch (err) {
+            return next(err);
+        }
+    },
+
+    // 4. APPLY COUPON (Customer Cart - With Live FAANG Math)
     async applyCoupon(req, res, next) {
         const { code } = req.body;
         if (!code) return next(CustomErrorHandler.badRequest('Please enter a coupon code.'));
 
         try {
-            // 1. Cart dhoondo aur Product ki poori details (price, sizes) POPULATE karo
             const cart = await Cart.findOne({ user: req.user._id }).populate('items.product');
             
             if (!cart || !cart.items || cart.items.length === 0) {
                 return next(CustomErrorHandler.badRequest('Your cart is empty.'));
             }
 
-            // 2. Coupon dhoondo aur checks lagao
             const coupon = await Coupon.findOne({ code: code.toUpperCase() });
             
             if (!coupon) return next(CustomErrorHandler.notFound('Invalid coupon code.'));
@@ -54,20 +81,15 @@ const couponController = {
             // --- ZERO-TRUST LIVE MATH ---
             let currentCartTotal = 0;
 
-            // Har ek item ka price live calculate karo
             for (const item of cart.items) {
                 const product = item.product;
-                
-                // Base price uthao
                 let itemPrice = product.discountPrice > 0 ? product.discountPrice : product.basePrice;
 
-                // Size ka extra paisa jodo
                 if (item.selectedSize && product.sizes && product.sizes.length > 0) {
                     const sizeData = product.sizes.find(s => s.sizeLabel === item.selectedSize);
                     if (sizeData) itemPrice += sizeData.priceModifier;
                 }
 
-                // Addons ka extra paisa jodo
                 if (item.selectedAddons && item.selectedAddons.length > 0 && product.addons) {
                     item.selectedAddons.forEach(addonName => {
                         const addonData = product.addons.find(a => a.addonName === addonName);
@@ -75,22 +97,20 @@ const couponController = {
                     });
                 }
 
-                // Quantity se multiply karke grand total me dalo
                 currentCartTotal += (itemPrice * item.quantity);
             }
 
-            // 3. Minimum Order Check
+            // 🚀 FIXED TYPO: coupon.minCartValue - currentCartTotal
             if (currentCartTotal < coupon.minCartValue) {
                 return next(CustomErrorHandler.badRequest(`You need to add ₹${coupon.minCartValue - currentCartTotal} more to use this coupon.`));
             }
 
-            // 4. Discount Math
             let discountAmount = 0;
             if (coupon.discountType === 'FLAT') {
                 discountAmount = coupon.discountValue; 
                 if (discountAmount > currentCartTotal) discountAmount = currentCartTotal; 
             } else if (coupon.discountType === 'PERCENTAGE') {
-                discountAmount = (currentCartTotal * coupon.discountValue) / 100;
+                discountAmount = Math.round((currentCartTotal * coupon.discountValue) / 100);
             }
 
             const finalAmountToPay = currentCartTotal - discountAmount;
@@ -99,6 +119,7 @@ const couponController = {
                 success: true,
                 message: `Hurray! You saved ₹${discountAmount}.`,
                 data: {
+                    code: coupon.code,
                     originalTotal: currentCartTotal,
                     discountAmount: discountAmount,
                     finalTotal: finalAmountToPay

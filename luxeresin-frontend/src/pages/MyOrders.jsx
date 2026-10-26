@@ -6,8 +6,16 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 // 🚀 YAHAN APNA ASALI PHONEPE / UPI ID DAALEIN
-const MERCHANT_UPI_ID = '9708723622@ybl'; 
+const MERCHANT_UPI_ID = 'yourphonepe@ybl'; 
 const MERCHANT_NAME = 'LuxeResin Art';
+
+// 🚀 BESPOKE PROGRESS STEPS
+const BESPOKE_STEPS = [
+    { key: 'ADVANCE_PAID', label: 'Advance Paid', icon: '💳' },
+    { key: 'IN_MAKING', label: 'In Making', icon: '🎨' },
+    { key: 'SHIPPED', label: 'Shipped', icon: '🚚' },
+    { key: 'DELIVERED', label: 'Delivered', icon: '✨' }
+];
 
 const MyOrders = () => {
     const dispatch = useDispatch();
@@ -15,7 +23,7 @@ const MyOrders = () => {
     
     const [activeTab, setActiveTab] = useState('STANDARD');
 
-    // 🚀 PAYMENT MODAL STATES
+    // PAYMENT MODAL STATES
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [timeLeft, setTimeLeft] = useState(300); // 5 Minutes (300 seconds)
     const [submittingPayment, setSubmittingPayment] = useState(false);
@@ -36,7 +44,7 @@ const MyOrders = () => {
         dispatch(fetchMyCustomRequests());
     }, [dispatch]);
 
-    // 🚀 5-MINUTE LIVE COUNTDOWN TIMER LOGIC
+    // 5-MINUTE LIVE COUNTDOWN TIMER LOGIC
     useEffect(() => {
         if (!selectedRequest) return;
 
@@ -55,21 +63,18 @@ const MyOrders = () => {
         return () => clearInterval(timer);
     }, [selectedRequest]);
 
-    // Modal Open Karne Ka Function
     const handleOpenPaymentModal = (req) => {
         setSelectedRequest(req);
-        setTimeLeft(300); // Reset timer to 5:00
+        setTimeLeft(300);
         setUtrNumber('');
     };
 
-    // Timer ko MM:SS format mein dikhane ke liye
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
         return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     };
 
-    // 🚀 FINAL SUBMIT: Address + UTR Backend Ko Bhejein
     const handleConfirmPayment = async (e) => {
         e.preventDefault();
 
@@ -105,6 +110,11 @@ const MyOrders = () => {
         }
     };
 
+    // Helper: Current step index nikalne ke liye
+    const getStepIndex = (status) => {
+        return BESPOKE_STEPS.findIndex((s) => s.key === status);
+    };
+
     if (ordersLoading || requestsLoading) {
         return <div className="min-h-screen flex justify-center items-center font-bold text-gray-400 uppercase tracking-widest text-sm">Fetching your collection...</div>;
     }
@@ -113,7 +123,6 @@ const MyOrders = () => {
         return <div className="text-center py-20 text-red-500 font-bold uppercase tracking-widest text-sm">{ordersError || requestsError}</div>;
     }
 
-    // Selected request ke 50% advance aur UPI QR link ka calculation
     const advanceAmount = selectedRequest ? Math.round(selectedRequest.estimatedPrice / 2) : 0;
     const upiUri = selectedRequest
         ? `upi://pay?pa=${MERCHANT_UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${advanceAmount}&cu=INR&tn=${encodeURIComponent(`BespokeOrder_${selectedRequest._id.slice(-6)}`)}`
@@ -228,95 +237,180 @@ const MyOrders = () => {
                                 <button onClick={() => navigate('/custom-art')} className="px-6 py-2 bg-black text-[#D4AF37] text-[10px] font-black tracking-[0.2em] uppercase rounded-sm hover:bg-[#D4AF37] hover:text-black transition-colors">Request Custom Art</button>
                             </div>
                         ) : (
-                            myRequests.map((req) => (
-                                <div key={req._id} className="bg-white p-6 sm:p-8 rounded-2xl shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] border border-gray-100 flex flex-col md:flex-row gap-8 transition-all hover:shadow-[0_8px_30px_-10px_rgba(0,0,0,0.08)]">
-                                    
-                                    <div className="w-full md:w-1/3 flex-shrink-0">
-                                        <div className="w-full aspect-square rounded-xl overflow-hidden border border-gray-100 mb-4 bg-gray-50">
-                                            <img src={req.referenceImage} alt={req.theme} className="w-full h-full object-cover" />
+                            myRequests.map((req) => {
+                                const currentStepIdx = getStepIndex(req.status);
+                                const remainingBalance = (req.estimatedPrice || 0) - (req.advancePaid || 0);
+
+                                return (
+                                    <div key={req._id} className="bg-white p-6 sm:p-8 rounded-2xl shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] border border-gray-100 flex flex-col gap-8 transition-all hover:shadow-[0_8px_30px_-10px_rgba(0,0,0,0.08)]">
+                                        
+                                        <div className="flex flex-col md:flex-row gap-8">
+                                            {/* IMAGE COLUMN */}
+                                            <div className="w-full md:w-1/3 flex-shrink-0">
+                                                <div className="w-full aspect-square rounded-xl overflow-hidden border border-gray-100 mb-4 bg-gray-50">
+                                                    <img src={req.referenceImage} alt={req.theme} className="w-full h-full object-cover" />
+                                                </div>
+                                                <p className="text-[10px] font-black text-[#D4AF37] uppercase tracking-[0.2em]">{req.theme}</p>
+                                                <p className="text-xs text-gray-500 font-bold mt-1">Requested: {new Date(req.createdAt).toLocaleDateString('en-IN')}</p>
+                                            </div>
+
+                                            {/* DETAILS COLUMN */}
+                                            <div className="w-full md:w-2/3 flex flex-col justify-between">
+                                                <div>
+                                                    <div className="flex justify-between items-start mb-6">
+                                                        <div>
+                                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Ref #{req._id.slice(-6).toUpperCase()}</p>
+                                                            <h3 className="text-2xl font-black text-black tracking-tight">{req.shape} Design</h3>
+                                                        </div>
+                                                        
+                                                        <span className={`px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] rounded-sm border ${
+                                                            req.status === 'PENDING' || req.status === 'REVIEWING' ? 'bg-yellow-50 text-yellow-600 border-yellow-200' :
+                                                            req.status === 'ACCEPTED' ? 'bg-[#050505] text-[#D4AF37] border-[#D4AF37]/30 shadow-[0_0_15px_rgba(212,175,55,0.1)]' :
+                                                            req.status === 'DELIVERED' ? 'bg-green-100 text-green-800 border-green-300' :
+                                                            'bg-[#050505] text-[#D4AF37] border-[#D4AF37]/40'
+                                                        }`}>
+                                                            {req.status.replace('_', ' ')}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-4 mb-6">
+                                                        <div className="bg-[#fafafa] p-3 rounded-lg border border-gray-100">
+                                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Dimensions</p>
+                                                            <p className="text-sm font-bold text-gray-800">{req.dimensions}</p>
+                                                        </div>
+                                                        <div className="bg-[#fafafa] p-3 rounded-lg border border-gray-100">
+                                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Custom Text</p>
+                                                            <p className="text-sm font-bold text-gray-800">{req.customText || 'None'}</p>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {/* ARTIST NOTE / TRACKING UPDATE */}
+                                                    {req.adminNotes && (
+                                                        <div className="bg-[#0a0a0a] text-white p-4 rounded-xl border border-[#D4AF37]/30 mb-6">
+                                                            <p className="text-[9px] font-black text-[#D4AF37] uppercase tracking-[0.2em] mb-1">
+                                                                ✨ Studio Update / Tracking Info
+                                                            </p>
+                                                            <p className="text-xs font-medium text-gray-200 leading-relaxed">
+                                                                "{req.adminNotes}"
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* QUOTATION & PAYMENT BREAKDOWN */}
+                                                <div className="mt-auto border-t border-gray-100 pt-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                                    <div>
+                                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Artist Quotation</p>
+                                                        {req.estimatedPrice > 0 ? (
+                                                            <p className="text-3xl font-black text-black tracking-tighter">₹{req.estimatedPrice.toLocaleString('en-IN')}</p>
+                                                        ) : (
+                                                            <p className="text-sm font-bold text-gray-400">Evaluating...</p>
+                                                        )}
+                                                    </div>
+                                                    
+                                                    {/* BUTTON: Opens PhonePe QR + Address Modal */}
+                                                    {req.status === 'ACCEPTED' && req.estimatedPrice > 0 && (
+                                                        <button 
+                                                            onClick={() => handleOpenPaymentModal(req)} 
+                                                            className="w-full sm:w-auto px-8 py-4 bg-black text-[#D4AF37] font-black uppercase tracking-[0.2em] text-xs rounded-sm hover:bg-[#D4AF37] hover:text-black transition-all shadow-lg hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] cursor-pointer"
+                                                        >
+                                                            Confirm Order (UPI)
+                                                        </button>
+                                                    )}
+
+                                                    {/* 🚀 PAYMENT SUMMARY BADGE (Once Advance is Paid) */}
+                                                    {currentStepIdx !== -1 && (
+                                                        <div className="w-full sm:w-auto bg-gray-50 p-3.5 rounded-xl border border-gray-200 text-left sm:text-right">
+                                                            <p className="text-xs font-black text-green-700">
+                                                                ✅ Advance Paid: ₹{req.advancePaid?.toLocaleString('en-IN')} <span className="text-[10px] font-mono text-gray-500">(UTR: {req.utrNumber})</span>
+                                                            </p>
+                                                            <p className="text-[11px] font-bold text-gray-700 mt-1">
+                                                                {req.status === 'DELIVERED' 
+                                                                    ? '🎉 Full Payment Completed' 
+                                                                    : `Balance Due on Delivery: ₹${remainingBalance.toLocaleString('en-IN')}`}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
-                                        <p className="text-[10px] font-black text-[#D4AF37] uppercase tracking-[0.2em]">{req.theme}</p>
-                                        <p className="text-xs text-gray-500 font-bold mt-1">Requested: {new Date(req.createdAt).toLocaleDateString()}</p>
+
+                                        {/* ================================================================= */}
+                                        {/* 🚀 3D HD ANIMATED LIVE PROGRESS TRACKER */}
+                                        {/* ================================================================= */}
+                                        {currentStepIdx !== -1 && (
+                                            <div className="bg-[#0a0a0a] p-6 sm:p-8 rounded-2xl border border-[#D4AF37]/20 text-white shadow-[0_4px_25px_rgba(0,0,0,0.5)]">
+                                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-2">
+                                                    <div>
+                                                        <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#D4AF37]">
+                                                            Live Crafting Progress
+                                                        </p>
+                                                        <h4 className="text-lg font-black tracking-tight mt-0.5 text-white">Masterpiece Status</h4>
+                                                    </div>
+                                                    {req.shippingAddress?.city && (
+                                                        <p className="text-[10px] font-bold text-gray-400">
+                                                            📍 Delivering to: <span className="text-white">{req.shippingAddress.fullName}, {req.shippingAddress.city}</span>
+                                                        </p>
+                                                    )}
+                                                </div>
+
+                                                {/* Progress Line Container */}
+                                                <div className="relative px-2 sm:px-6">
+                                                    {/* Background Track Line */}
+                                                    <div className="absolute top-5 left-12 right-12 h-1 bg-white/10 rounded-full z-0"></div>
+
+                                                    {/* Animated Glowing Gold Progress Line */}
+                                                    <div 
+                                                        className="absolute top-5 left-12 h-1 bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] rounded-full z-0 transition-all duration-1000 ease-in-out shadow-[0_0_15px_rgba(212,175,55,0.7)]"
+                                                        style={{ 
+                                                            width: `${Math.max(0, (currentStepIdx / (BESPOKE_STEPS.length - 1)) * 100)}%`,
+                                                            maxWidth: 'calc(100% - 6rem)'
+                                                        }}
+                                                    ></div>
+
+                                                    {/* Steps Flex Grid */}
+                                                    <div className="relative z-10 flex justify-between items-center">
+                                                        {BESPOKE_STEPS.map((step, idx) => {
+                                                            const isCompleted = idx <= currentStepIdx;
+                                                            const isCurrent = idx === currentStepIdx;
+
+                                                            return (
+                                                                <div key={step.key} className="flex flex-col items-center text-center group">
+                                                                    <div className={`w-11 h-11 rounded-full flex items-center justify-center text-base font-black transition-all duration-500 ${
+                                                                        isCompleted 
+                                                                            ? 'bg-gradient-to-br from-[#BF953F] to-[#B38728] text-black shadow-[0_0_20px_rgba(212,175,55,0.5)] scale-105' 
+                                                                            : 'bg-[#141414] text-gray-500 border border-white/10'
+                                                                    } ${isCurrent ? 'ring-4 ring-[#D4AF37]/30 scale-110 animate-pulse' : ''}`}>
+                                                                        {step.icon}
+                                                                    </div>
+                                                                    <p className={`text-[10px] font-black uppercase tracking-wider mt-3 transition-colors duration-300 ${
+                                                                        isCompleted ? 'text-[#D4AF37]' : 'text-gray-500'
+                                                                    }`}>
+                                                                        {step.label}
+                                                                    </p>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
                                     </div>
-
-                                    <div className="w-full md:w-2/3 flex flex-col justify-between">
-                                        <div>
-                                            <div className="flex justify-between items-start mb-6">
-                                                <h3 className="text-2xl font-black text-black tracking-tight">{req.shape} Design</h3>
-                                                
-                                                <span className={`px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] rounded-sm border ${
-                                                    req.status === 'PENDING' || req.status === 'REVIEWING' ? 'bg-yellow-50 text-yellow-600 border-yellow-200' :
-                                                    req.status === 'ACCEPTED' ? 'bg-[#050505] text-[#D4AF37] border-[#D4AF37]/30 shadow-[0_0_15px_rgba(212,175,55,0.1)]' :
-                                                    req.status === 'ADVANCE_PAID' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                                    'bg-green-50 text-green-600 border-green-200'
-                                                }`}>
-                                                    {req.status.replace('_', ' ')}
-                                                </span>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-4 mb-6">
-                                                <div className="bg-[#fafafa] p-3 rounded-lg border border-gray-100">
-                                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Dimensions</p>
-                                                    <p className="text-sm font-bold text-gray-800">{req.dimensions}</p>
-                                                </div>
-                                                <div className="bg-[#fafafa] p-3 rounded-lg border border-gray-100">
-                                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Custom Text</p>
-                                                    <p className="text-sm font-bold text-gray-800">{req.customText || 'None'}</p>
-                                                </div>
-                                            </div>
-                                            
-                                            {req.adminNotes && (
-                                                <p className="text-xs font-medium text-gray-500 italic bg-gray-50 p-3 rounded-lg border-l-2 border-gray-200 mb-6">
-                                                    " {req.adminNotes} "
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        <div className="mt-auto border-t border-gray-100 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-                                            <div>
-                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Artist Quotation</p>
-                                                {req.estimatedPrice > 0 ? (
-                                                    <p className="text-3xl font-black text-black tracking-tighter">₹{req.estimatedPrice.toLocaleString('en-IN')}</p>
-                                                ) : (
-                                                    <p className="text-sm font-bold text-gray-400">Evaluating...</p>
-                                                )}
-                                            </div>
-                                            
-                                            {/* 🚀 BUTTON: Opens PhonePe QR + Address Modal */}
-                                            {req.status === 'ACCEPTED' && req.estimatedPrice > 0 && (
-                                                <button 
-                                                    onClick={() => handleOpenPaymentModal(req)} 
-                                                    className="w-full sm:w-auto px-8 py-4 bg-black text-[#D4AF37] font-black uppercase tracking-[0.2em] text-xs rounded-sm hover:bg-[#D4AF37] hover:text-black transition-all shadow-lg hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] cursor-pointer"
-                                                >
-                                                    Confirm Order (UPI)
-                                                </button>
-                                            )}
-
-                                            {/* 🚀 ADVANCE PAID CONFIRMATION */}
-                                            {req.status === 'ADVANCE_PAID' && (
-                                                <div className="w-full sm:w-auto text-right">
-                                                    <p className="text-xs font-bold text-green-700 bg-green-50 px-4 py-2.5 rounded-sm border border-green-200 inline-block">
-                                                        ✅ ₹{req.advancePaid?.toLocaleString('en-IN')} Advance Paid (UTR: {req.utrNumber})
-                                                    </p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))
+                                );
+                            })
                         )}
                     </div>
                 )}
             </div>
 
             {/* ================================================================= */}
-            {/* 🚀 LUXURY UPI CHECKOUT MODAL (Address + PhonePe QR + 5-Min Timer) */}
+            {/* LUXURY UPI CHECKOUT MODAL (Address + PhonePe QR + 5-Min Timer) */}
             {/* ================================================================= */}
             {selectedRequest && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 overflow-y-auto">
                     <div className="bg-[#0a0a0a] border border-[#D4AF37]/40 rounded-2xl max-w-3xl w-full p-6 sm:p-8 text-white shadow-[0_0_50px_rgba(212,175,55,0.15)] relative my-8">
                         
-                        {/* Close Button */}
                         <button 
                             onClick={() => setSelectedRequest(null)}
                             className="absolute top-5 right-5 text-gray-400 hover:text-white text-xl font-bold cursor-pointer"
@@ -324,7 +418,6 @@ const MyOrders = () => {
                             ✕
                         </button>
 
-                        {/* Modal Header & Timer */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-white/10 pb-5 mb-6 gap-4 pr-8">
                             <div>
                                 <p className="text-[10px] font-black text-[#D4AF37] uppercase tracking-[0.25em]">Bespoke Vault Checkout</p>
@@ -416,7 +509,6 @@ const MyOrders = () => {
                                         <span className="text-[10px] bg-[#D4AF37]/10 text-[#D4AF37] px-2 py-0.5 rounded font-bold">50% Advance</span>
                                     </div>
 
-                                    {/* QR CODE BOX */}
                                     <div className="bg-white p-4 rounded-xl flex flex-col items-center justify-center mb-4 shadow-inner">
                                         <img 
                                             src={qrCodeUrl} 
@@ -429,7 +521,6 @@ const MyOrders = () => {
                                         <p className="text-[10px] text-gray-500 font-bold">Total Quote: ₹{selectedRequest.estimatedPrice.toLocaleString('en-IN')}</p>
                                     </div>
 
-                                    {/* UTR / REF NUMBER INPUT */}
                                     <div className="mb-4">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-gray-300 block mb-1">
                                             Enter 12-Digit UPI Ref / UTR No. *
