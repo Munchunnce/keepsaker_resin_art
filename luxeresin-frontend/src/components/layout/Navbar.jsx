@@ -11,7 +11,7 @@ const Navbar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   
-  // 🚀 SEARCH STATE
+  // SEARCH STATE
   const [searchTerm, setSearchTerm] = useState("");
 
   const userData = user?.user || user?.data || user;
