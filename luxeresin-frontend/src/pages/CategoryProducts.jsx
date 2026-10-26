@@ -23,7 +23,7 @@ const CategoryProducts = () => {
 
             try {
                 setLoading(true);
-                // 🚀 Same logic as CategoryShowcase
+                // Same logic as CategoryShowcase
                 const res = await axiosInstance.get(`/categories/${slug}`);
                 
                 console.log("Category Data Fetched:", res.data); // 🔍 Debugging ke liye check karein
