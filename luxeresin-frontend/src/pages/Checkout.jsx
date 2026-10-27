@@ -77,7 +77,7 @@ const Checkout = () => {
     }
 
     try {
-      // 🚀 ORDER PAYLOAD MEIN DYNAMIC PAYMENT METHOD BHEJA HAI
+      // ORDER PAYLOAD MEIN DYNAMIC PAYMENT METHOD BHEJA HAI
       const orderPayload = {
         shippingAddress: {
           fullName: formData.fullName,
