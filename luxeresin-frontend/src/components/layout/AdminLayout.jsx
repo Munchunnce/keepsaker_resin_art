@@ -14,7 +14,7 @@ const AdminLayout = () => {
     return (
         <div className="flex h-screen bg-[#050505] text-white overflow-hidden font-sans">
             
-            {/* 🚀 LEFT SIDEBAR - Obsidian Glassmorphism */}
+            {/* LEFT SIDEBAR - Obsidian Glassmorphism */}
             <aside className="w-64 bg-[#0a0a0a] border-r border-white/5 flex flex-col justify-between">
                 <div>
                     {/* Brand Logo Area */}
