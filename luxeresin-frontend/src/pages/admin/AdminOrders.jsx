@@ -13,7 +13,7 @@ const AdminOrders = () => {
 
     const safeOrders = Array.isArray(allOrders) ? allOrders : [];
 
-    // 🚀 THE MAGIC: Status Change & Reverse Logic
+    // THE MAGIC: Status Change & Reverse Logic
     const handleStatusChange = async (orderId, newStatus) => {
         try {
             await dispatch(updateOrderStatus({ id: orderId, orderStatus: newStatus })).unwrap();
