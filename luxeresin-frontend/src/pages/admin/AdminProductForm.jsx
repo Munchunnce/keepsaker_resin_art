@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 const AdminProductForm = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const location = useLocation(); // 🚀 Rasta check karne ke liye
+    const location = useLocation(); // Rasta check karne ke liye
 
     // 🚀 EDIT MODE DETECTOR
     const editProduct = location.state?.editProduct;
