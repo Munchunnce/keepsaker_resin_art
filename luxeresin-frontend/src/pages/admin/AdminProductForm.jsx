@@ -10,7 +10,7 @@ const AdminProductForm = () => {
     const navigate = useNavigate();
     const location = useLocation(); // Rasta check karne ke liye
 
-    // 🚀 EDIT MODE DETECTOR
+    // EDIT MODE DETECTOR
     const editProduct = location.state?.editProduct;
     const isEditMode = Boolean(editProduct);
 
