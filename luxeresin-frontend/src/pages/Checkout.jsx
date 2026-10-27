@@ -20,7 +20,7 @@ const Checkout = () => {
   const { user } = useSelector((state) => state.auth);
   const { loading } = useSelector((state) => state.order);
 
-  // 🚀 LIVE MATH LOGIC WITH DISCOUNT
+  // LIVE MATH LOGIC WITH DISCOUNT
   const items = cart?.items || [];
   const subtotal = items.reduce(
     (acc, item) => acc + item.product?.basePrice * item.quantity,
