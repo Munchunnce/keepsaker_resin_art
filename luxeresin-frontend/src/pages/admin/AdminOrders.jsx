@@ -74,7 +74,7 @@ const AdminOrders = () => {
                                     </td>
 
                                     <td className="px-6 py-5">
-                                        {/* 🚀 VIP DROPDOWN: Yahan se status change aur reverse hoga */}
+                                        {/* VIP DROPDOWN: Yahan se status change aur reverse hoga */}
                                         <select 
                                             value={order.orderStatus || 'PLACED'} 
                                             onChange={(e) => handleStatusChange(order._id, e.target.value)}
