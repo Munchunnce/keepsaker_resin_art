@@ -10,7 +10,7 @@ const Checkout = () => {
 
   const [isOrderSuccess, setIsOrderSuccess] = useState(false);
   
-  // 🚀 NAYA: Payment Method State ('COD' by default)
+  // NAYA: Payment Method State ('COD' by default)
   const [paymentMethod, setPaymentMethod] = useState("COD");
 
   // REDUX SE DISCOUNT AUR COUPON BHI NIKALA HAI
