@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchAllOrders } from '../../features/order/orderSlice';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-// 🚀 FIX 1: TOOLTIP KO COMPONENT KE BAHAR NIKAL DIYA
+// FIX 1: TOOLTIP KO COMPONENT KE BAHAR NIKAL DIYA
 const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
         return (
