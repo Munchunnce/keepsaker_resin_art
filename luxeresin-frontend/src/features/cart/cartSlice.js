@@ -123,7 +123,7 @@ const cartSlice = createSlice({
                 state.loading = true; 
                 state.error = null; 
             })
-            // 🚀 FIX 3: Seedha action.payload se discountAmount aur code uthaya (bina extra .data ke)
+            // FIX 3: Seedha action.payload se discountAmount aur code uthaya (bina extra .data ke)
             .addCase(applyCouponCode.fulfilled, (state, action) => {
                 state.loading = false;
                 state.discountAmount = action.payload.discountAmount || 0;
