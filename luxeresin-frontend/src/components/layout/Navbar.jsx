@@ -27,7 +27,7 @@ const Navbar = () => {
     }
   };
 
-  // 🚀 SEARCH LOGIC
+  // SEARCH LOGIC
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchTerm.trim()) {
