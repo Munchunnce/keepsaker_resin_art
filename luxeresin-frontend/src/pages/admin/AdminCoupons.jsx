@@ -168,7 +168,7 @@ const AdminCoupons = () => {
             </form>
 
             {/* ========================================================= */}
-            {/* 🚀 FORGED COUPONS VAULT (LIVE LIST & DELETE) */}
+            {/* FORGED COUPONS VAULT (LIVE LIST & DELETE) */}
             {/* ========================================================= */}
             <div>
                 <h3 className="text-lg font-black text-white uppercase tracking-widest mb-6">
