@@ -66,7 +66,7 @@ const Navbar = () => {
               About Us
             </Link>
             
-            {/* 🔍 SEARCH BAR */}
+            {/* SEARCH BAR */}
             <form onSubmit={handleSearch} className="flex items-center bg-[#121212] border border-white/10 rounded-sm px-4 py-2 focus-within:border-[#D4AF37] focus-within:ring-1 focus-within:ring-[#D4AF37] transition-all ml-4">
                 <input 
                     type="text" 
