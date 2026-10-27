@@ -51,7 +51,7 @@ const AdminDashboard = () => {
     const processingCount = safeOrders.filter(o => o.orderStatus === 'PROCESSING').length;
     const deliveredCount = safeOrders.filter(o => o.orderStatus === 'DELIVERED').length;
 
-    // 🚀 USE THE HELPER FUNCTION (No manual useMemo needed, React Compiler handles it)
+    // USE THE HELPER FUNCTION (No manual useMemo needed, React Compiler handles it)
     const chartData = generateChartData(safeOrders);
 
     const stats = [
