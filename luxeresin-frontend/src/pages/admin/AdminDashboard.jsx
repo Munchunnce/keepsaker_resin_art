@@ -45,7 +45,7 @@ const AdminDashboard = () => {
 
     const safeOrders = Array.isArray(allOrders) ? allOrders : [];
     
-    // 🚀 CLEAN STATS MATH
+    // CLEAN STATS MATH
     const totalRevenue = safeOrders.reduce((sum, order) => sum + (order.finalTotal || 0), 0);
     const newOrdersCount = safeOrders.filter(o => o.orderStatus === 'PLACED').length;
     const processingCount = safeOrders.filter(o => o.orderStatus === 'PROCESSING').length;
