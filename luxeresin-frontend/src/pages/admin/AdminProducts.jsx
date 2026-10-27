@@ -116,7 +116,7 @@ const AdminProducts = () => {
                                     {/* ACTIONS */}
                                     <td className="px-6 py-5 text-right">
                                         <div className="flex items-center justify-end gap-4">
-                                            {/* 🚀 NAYA: EDIT BUTTON */}
+                                            {/* NAYA: EDIT BUTTON */}
                                             <button 
                                                 onClick={() => navigate('/admin/products/new', { state: { editProduct: product } })}
                                                 className="p-2 text-gray-500 hover:text-blue-400 transition-colors cursor-pointer text-lg" 
