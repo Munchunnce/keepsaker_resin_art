@@ -5,7 +5,7 @@ import { fetchMyCustomRequests, acceptCustomArtQuote } from '../features/customA
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
-// 🚀 YAHAN APNA ASALI PHONEPE / UPI ID DAALEIN
+// YAHAN APNA ASALI PHONEPE / UPI ID DAALEIN
 const MERCHANT_UPI_ID = 'yourphonepe@ybl'; 
 const MERCHANT_NAME = 'LuxeResin Art';
 
