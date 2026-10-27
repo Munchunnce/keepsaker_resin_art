@@ -15,7 +15,7 @@ const AdminCoupons = () => {
         expiryDate: '',
     });
 
-    // 🚀 Page load hote hi saare coupons fetch karein
+    // Page load hote hi saare coupons fetch karein
     useEffect(() => {
         dispatch(fetchCoupons());
     }, [dispatch]);
