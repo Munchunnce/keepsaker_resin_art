@@ -69,7 +69,7 @@ const cartSlice = createSlice({
         error: null,
     },
     reducers: {
-        // 🚀 FIX 1: Logout ya Order Place hone par coupon bhi clear hoga
+        // FIX 1: Logout ya Order Place hone par coupon bhi clear hoga
         clearCartOnLogout: (state) => {
             state.cart = { items: [] };
             state.totalQuantity = 0;
