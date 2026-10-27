@@ -11,7 +11,7 @@ export const verifyAuthStatus = createAsyncThunk('auth/verify', async (_, { reje
     }
 });
 
-// 🚀 2. THE ZOMBIE KILLER: Asli Logout jo Backend Cookie ko destroy karega
+// 2. THE ZOMBIE KILLER: Asli Logout jo Backend Cookie ko destroy karega
 export const logoutUser = createAsyncThunk('auth/logout', async (_, { rejectWithValue }) => {
     try {
         await axiosInstance.post('/logout'); // Backend ko bolo HttpOnly Cookie khatam kare!
