@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../../services/axiosInstance';
 
-// 🚀 UPGRADED: Saare products mangwane ke liye (Search & Filter Ready)
+// UPGRADED: Saare products mangwane ke liye (Search & Filter Ready)
 export const fetchProducts = createAsyncThunk('products/fetchAll', async (queryParams = {}, { rejectWithValue }) => {
     try {
         // Axios apne aap queryParams ko URL mein `?search=abc` mein convert kar dega
