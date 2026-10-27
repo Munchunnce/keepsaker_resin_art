@@ -16,7 +16,7 @@ const customArtRequestSchema = new mongoose.Schema({
     // Admin Fields
     status: {
         type: String,
-        // 🚀 FIX: Yahan 'ADVANCE_PAID' aur 'AWAITING_ADVANCE' dono add kar diye hain
+        // Yahan 'ADVANCE_PAID' aur 'AWAITING_ADVANCE' dono add kar diye hain
         enum: [
             'PENDING', 
             'REVIEWING', 
