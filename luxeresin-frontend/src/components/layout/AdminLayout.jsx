@@ -56,7 +56,7 @@ const AdminLayout = () => {
                 </div>
             </aside>
 
-            {/* 🚀 RIGHT MAIN CONTENT AREA */}
+            {/* RIGHT MAIN CONTENT AREA */}
             <main className="flex-1 overflow-y-auto bg-[#050505] relative">
                 {/* Subtle Background Glow */}
                 <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#D4AF37] opacity-[0.02] blur-[120px] pointer-events-none"></div>
