@@ -90,7 +90,7 @@ const cartSlice = createSlice({
             state.loading = false;
         };
 
-        // 🚀 FIX 2: Jab cart items add/update/delete hon, toh coupon reset karein taaki galat discount na lage
+        // FIX 2: Jab cart items add/update/delete hon, toh coupon reset karein taaki galat discount na lage
         const handleCartChangeSuccess = (state, action) => {
             state.cart = action.payload || { items: [] };
             state.totalQuantity = calculateTotalQuantity(state.cart.items);
