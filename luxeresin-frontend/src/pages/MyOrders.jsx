@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 const MERCHANT_UPI_ID = 'yourphonepe@ybl'; 
 const MERCHANT_NAME = 'LuxeResin Art';
 
-// 🚀 BESPOKE PROGRESS STEPS
+// BESPOKE PROGRESS STEPS
 const BESPOKE_STEPS = [
     { key: 'ADVANCE_PAID', label: 'Advance Paid', icon: '💳' },
     { key: 'IN_MAKING', label: 'In Making', icon: '🎨' },
