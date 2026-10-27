@@ -100,7 +100,7 @@ const orderSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload;
             })
-            // 🚀 FETCH ALL ORDERS (ADMIN) Cases
+            // FETCH ALL ORDERS (ADMIN) Cases
             .addCase(fetchAllOrders.pending, (state) => {
                 state.loading = true;
                 state.error = null;
