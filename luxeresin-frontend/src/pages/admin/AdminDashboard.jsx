@@ -16,7 +16,7 @@ const CustomTooltip = ({ active, payload, label }) => {
     return null;
 };
 
-// 🚀 FIX 2: GRAPH DATA LOGIC KO BHI BAHAR NIKAL DIYA (React Compiler Khush)
+// FIX 2: GRAPH DATA LOGIC KO BHI BAHAR NIKAL DIYA (React Compiler Khush)
 const generateChartData = (orders) => {
     if (!orders || orders.length === 0) return [];
     
