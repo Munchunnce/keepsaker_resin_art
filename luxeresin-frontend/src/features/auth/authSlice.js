@@ -40,7 +40,7 @@ const authSlice = createSlice({
             })
             .addCase(verifyAuthStatus.fulfilled, (state, action) => {
                 state.isAuthenticated = true;
-                // 🔥 FIX: Backend ka data jahan bhi chhupa ho, usko nikal kar set karo!
+                // Backend ka data jahan bhi chhupa ho, usko nikal kar set karo!
                 state.user = action.payload.user || action.payload.data || action.payload; 
                 state.loading = false;
             })
