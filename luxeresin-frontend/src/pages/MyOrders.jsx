@@ -318,7 +318,7 @@ const MyOrders = () => {
                                                         </button>
                                                     )}
 
-                                                    {/* 🚀 PAYMENT SUMMARY BADGE (Once Advance is Paid) */}
+                                                    {/* PAYMENT SUMMARY BADGE (Once Advance is Paid) */}
                                                     {currentStepIdx !== -1 && (
                                                         <div className="w-full sm:w-auto bg-gray-50 p-3.5 rounded-xl border border-gray-200 text-left sm:text-right">
                                                             <p className="text-xs font-black text-green-700">
