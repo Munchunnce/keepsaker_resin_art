@@ -70,7 +70,7 @@ const Checkout = () => {
       return;
     }
 
-    // 🚀 Agar user ne abhi online select kiya hai toh future ke liye alert/toast
+    // Agar user ne abhi online select kiya hai toh future ke liye alert/toast
     if (paymentMethod === "ONLINE") {
       toast.error("Online payment gateway will be integrated soon! Please select Pay on Delivery.");
       return;
