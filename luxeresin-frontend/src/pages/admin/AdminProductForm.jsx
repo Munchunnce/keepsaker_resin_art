@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useLocation } from 'react-router-dom'; // 🚀 NAYA: useLocation
+import { useNavigate, useLocation } from 'react-router-dom';
 import { createProduct } from '../../features/products/productSlice';
 import axiosInstance from '../../services/axiosInstance';
 import toast from 'react-hot-toast';
