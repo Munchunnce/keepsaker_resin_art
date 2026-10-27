@@ -54,7 +54,7 @@ const AdminProducts = () => {
                 </button>
             </div>
 
-            {/* 🚀 THE LIVE VAULT TABLE */}
+            {/* THE LIVE VAULT TABLE */}
             <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm text-gray-400">
