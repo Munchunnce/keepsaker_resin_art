@@ -336,7 +336,7 @@ const MyOrders = () => {
                                         </div>
 
                                         {/* ================================================================= */}
-                                        {/* 🚀 3D HD ANIMATED LIVE PROGRESS TRACKER */}
+                                        {/* 3D HD ANIMATED LIVE PROGRESS TRACKER */}
                                         {/* ================================================================= */}
                                         {currentStepIdx !== -1 && (
                                             <div className="bg-[#0a0a0a] p-6 sm:p-8 rounded-2xl border border-[#D4AF37]/20 text-white shadow-[0_4px_25px_rgba(0,0,0,0.5)]">
