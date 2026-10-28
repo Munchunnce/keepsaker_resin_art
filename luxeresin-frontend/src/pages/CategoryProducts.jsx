@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axiosInstance from "../services/axiosInstance"; // 🚀 Same working instance
+import axiosInstance from "../services/axiosInstance"; // Same working instance
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../features/cart/cartSlice";
