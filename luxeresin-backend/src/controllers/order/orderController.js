@@ -72,7 +72,7 @@ const orderController = {
                 });
             }
 
-            // 🚀 4. ZERO-TRUST COUPON VERIFICATION & 1-USER-1-TIME CHECK
+            // 4. ZERO-TRUST COUPON VERIFICATION & 1-USER-1-TIME CHECK
             let discountAmount = 0;
             let validCoupon = null;
 
