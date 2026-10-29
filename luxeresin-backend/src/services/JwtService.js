@@ -19,7 +19,7 @@ class JwtService {
             throw new Error('JWT secret is missing or invalid');
         }
 
-        // FIX: Wrapped in a Promise taaki mera 'await JwtService.verify()' actual mein non-blocking ban jaye
+        // Wrapped in a Promise taaki mera 'await JwtService.verify()' actual mein non-blocking ban jaye
         return new Promise((resolve, reject) => {
             jwt.verify(token, secret, (err, decoded) => {
                 if (err) {
