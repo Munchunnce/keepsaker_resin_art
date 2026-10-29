@@ -10,7 +10,7 @@ import {
     CLOUDINARY_API_SECRET 
 } from '../../config/index.js'; 
 
-// 🚀 CLOUDINARY CONFIG (Ab direct config file se data aayega)
+// CLOUDINARY CONFIG (Ab direct config file se data aayega)
 cloudinary.config({
     cloud_name: CLOUDINARY_CLOUD_NAME,
     api_key: CLOUDINARY_API_KEY,
