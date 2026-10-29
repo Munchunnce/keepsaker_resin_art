@@ -43,7 +43,7 @@ const AdminOrders = () => {
                                 <th className="px-6 py-5 font-black">Order ID & Date</th>
                                 <th className="px-6 py-5 font-black">Customer Details</th>
                                 <th className="px-6 py-5 font-black">Items</th>
-                                <th className="px-6 py-5 font-black">Total Paid</th>
+                                <th className="px-6 py-5 font-black">Total & Payment</th>
                                 <th className="px-6 py-5 font-black">Live Status Action</th>
                             </tr>
                         </thead>
@@ -69,12 +69,25 @@ const AdminOrders = () => {
                                         </span>
                                     </td>
 
-                                    <td className="px-6 py-5 font-bold text-[#D4AF37] text-lg tracking-tight">
-                                        ₹{order.finalTotal}
+                                    {/* 🚀 TOTAL PAID & PAYMENT STATUS BADGE */}
+                                    <td className="px-6 py-5">
+                                        <p className="font-bold text-[#D4AF37] text-lg tracking-tight">₹{order.finalTotal}</p>
+                                        <div className="flex items-center gap-1.5 mt-1.5">
+                                            <span className="text-[9px] font-black px-1.5 py-0.5 bg-white/5 text-gray-400 rounded border border-white/10">
+                                                {order.paymentMethod || 'COD'}
+                                            </span>
+                                            <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${
+                                                order.paymentStatus === 'COMPLETED' 
+                                                    ? 'bg-green-500/10 text-green-400 border-green-500/30' 
+                                                    : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30'
+                                            }`}>
+                                                {order.paymentStatus === 'COMPLETED' ? '✅ PAID' : '⏳ PENDING'}
+                                            </span>
+                                        </div>
                                     </td>
 
                                     <td className="px-6 py-5">
-                                        {/* VIP DROPDOWN: Yahan se status change aur reverse hoga */}
+                                        {/* VIP DROPDOWN: Yahan se status change hoga */}
                                         <select 
                                             value={order.orderStatus || 'PLACED'} 
                                             onChange={(e) => handleStatusChange(order._id, e.target.value)}

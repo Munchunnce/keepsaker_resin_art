@@ -77,6 +77,12 @@ const couponController = {
             if (!coupon) return next(CustomErrorHandler.notFound('Invalid coupon code.'));
             if (!coupon.isActive) return next(CustomErrorHandler.badRequest('This coupon is no longer active.'));
             if (new Date(coupon.expiryDate) < new Date()) return next(CustomErrorHandler.badRequest('This coupon has expired.'));
+            const alreadyUsed = coupon.usedBy?.some(
+                (userId) => userId.toString() === req.user._id.toString()
+            );
+            if (alreadyUsed) {
+                return next(CustomErrorHandler.badRequest('You have already used this coupon code once!'));
+            }
 
             // --- ZERO-TRUST LIVE MATH ---
             let currentCartTotal = 0;

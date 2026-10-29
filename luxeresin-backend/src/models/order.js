@@ -59,6 +59,7 @@ const orderSchema = new mongoose.Schema(
         },
         // Razorpay / Stripe ki transaction ID yahan save hogi
         transactionId: { type: String },
+        utrNumber: { type: String, trim: true },
 
         orderStatus: {
             type: String,

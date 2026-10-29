@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { placeOrder } from "../features/order/orderSlice";
+import { clearCartOnLogout } from "../features/cart/cartSlice";
 import toast from "react-hot-toast";
 
 const Checkout = () => {
@@ -9,24 +10,28 @@ const Checkout = () => {
   const dispatch = useDispatch();
 
   const [isOrderSuccess, setIsOrderSuccess] = useState(false);
-  
-  // NAYA: Payment Method State ('COD' by default)
   const [paymentMethod, setPaymentMethod] = useState("COD");
 
-  // REDUX SE DISCOUNT AUR COUPON BHI NIKALA HAI
-  const { cart, discountAmount, appliedCoupon } = useSelector(
-    (state) => state.cart,
-  );
+  // UPI Modal states
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [utrNumber, setUtrNumber] = useState("");
+  const [timeLeft,setTimeLeft] = useState(600);
+
+  const {
+    cart,
+    discountAmount = 0,
+    appliedCoupon,
+  } = useSelector((state) => state.cart);
   const { user } = useSelector((state) => state.auth);
   const { loading } = useSelector((state) => state.order);
 
   // LIVE MATH LOGIC WITH DISCOUNT
   const items = cart?.items || [];
   const subtotal = items.reduce(
-    (acc, item) => acc + item.product?.basePrice * item.quantity,
+    (acc, item) => acc + (item.product?.basePrice || 0) * item.quantity,
     0,
   );
-  const finalSubtotal = subtotal - (discountAmount || 0); // Discount Minus kiya
+  const finalSubtotal = Math.max(0, subtotal - discountAmount);
   const shipping = finalSubtotal > 5000 ? 0 : 250;
   const total = finalSubtotal + shipping;
 
@@ -44,19 +49,40 @@ const Checkout = () => {
   });
 
   useEffect(() => {
-    if (items.length === 0) {
+    if (items.length === 0 && !isOrderSuccess) {
       navigate("/cart");
     }
   }, [items.length, navigate, isOrderSuccess]);
+
+  useEffect(() => {
+    // Agar modal band hai, toh kuch mat karo
+    if (!showQrModal) return;
+
+    // Timer start karo
+    const timer = setInterval(() => {
+      setTimeLeft((prevTime) => {
+        if (prevTime <= 1) {
+          clearInterval(timer); // Timer roko
+          setShowQrModal(false); // Modal band karo
+          setTimeout(() => toast.error("Payment session expired! Please try again."), 0);
+          return 600; // Timer wapas 10 min par reset karo
+        }
+        return prevTime - 1; // 1 second kam karo
+      });
+    }, 1000);
+
+    // Cleanup function: modal close hone par timer clear ho jayega
+    return () => clearInterval(timer);
+  }, [showQrModal]);
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleCheckout = async (e) => {
+  // 1. Validation Check before triggering Modal or COD Order
+  const handlePreCheckout = (e) => {
     e.preventDefault();
 
-    // 1. Strict Frontend Validation
     if (!/^[0-9]{10}$/.test(formData.phone)) {
       toast.error("Phone number must be exactly 10 digits.");
       return;
@@ -70,14 +96,19 @@ const Checkout = () => {
       return;
     }
 
-    // Agar user ne abhi online select kiya hai toh future ke liye alert/toast
+    // Agar ONLINE hai toh QR modal kholo
     if (paymentMethod === "ONLINE") {
-      toast.error("Online payment gateway will be integrated soon! Please select Pay on Delivery.");
+      setShowQrModal(true);
       return;
     }
 
+    // Agar COD hai toh direct order place karo
+    executeOrderPlacement();
+  };
+
+  // 2. Final Order Execution (For both COD and Verified ONLINE)
+  const executeOrderPlacement = async (verifiedUtr = null) => {
     try {
-      // ORDER PAYLOAD MEIN DYNAMIC PAYMENT METHOD BHEJA HAI
       const orderPayload = {
         shippingAddress: {
           fullName: formData.fullName,
@@ -87,20 +118,38 @@ const Checkout = () => {
           city: formData.city,
           state: formData.state,
         },
-        paymentMethod: paymentMethod, // 'COD' ya 'ONLINE'
+        paymentMethod: paymentMethod,
+        couponCode: appliedCoupon || null,
+        utrNumber: verifiedUtr, // Online payment ke liye UTR
       };
 
       await dispatch(placeOrder(orderPayload)).unwrap();
       setIsOrderSuccess(true);
+      dispatch(clearCartOnLogout());
+
       toast.success("Order Placed Successfully! 🎉");
-      navigate("/my-orders"); 
+      navigate("/my-orders");
     } catch (error) {
       toast.error(error || "Failed to process order.");
     }
   };
 
+  // 3. Handle QR Modal Submit (UTR Verification)
+  const handleVerifyAndPay = (e) => {
+    e.preventDefault();
+    if (!utrNumber || utrNumber.trim().length < 8) {
+      toast.error(
+        "Please enter a valid 12-digit UTR / Transaction Reference Number.",
+      );
+      return;
+    }
+
+    setShowQrModal(false);
+    executeOrderPlacement(utrNumber.trim());
+  };
+
   return (
-    <div className="bg-gray-50 min-h-screen py-12 md:py-20">
+    <div className="bg-gray-50 min-h-screen py-12 md:py-20 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <button
           onClick={() => navigate("/cart")}
@@ -109,15 +158,13 @@ const Checkout = () => {
           <span className="mr-2">←</span> Back to Cart
         </button>
 
-        {/* <h1 className="text-4xl font-extrabold text-gray-900 mb-10 tracking-tight">
-          Secure Checkout
-        </h1> */}
-        {/* 3D GOLDEN GRADIENT HEADING */}
         <div className="mb-10">
           <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] tracking-tight drop-shadow-[0_2px_10px_rgba(212,175,55,0.2)]">
             Secure Checkout
           </h1>
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-2">Finalize Your Luxury Acquisition</p>
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-2">
+            Finalize Your Luxury Acquisition
+          </p>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-12">
@@ -130,7 +177,7 @@ const Checkout = () => {
 
               <form
                 id="checkout-form"
-                onSubmit={handleCheckout}
+                onSubmit={handlePreCheckout}
                 className="space-y-6"
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -224,50 +271,61 @@ const Checkout = () => {
                     Payment Method
                   </h2>
                   <div className="space-y-4">
-                    
-                    {/* OPTION 1: COD */}
-                    <label 
+                    <label
                       onClick={() => setPaymentMethod("COD")}
                       className={`flex items-center p-5 border-2 rounded-xl cursor-pointer transition-all ${
-                        paymentMethod === "COD" ? "border-black bg-gray-50 shadow-sm" : "border-gray-200 bg-white"
+                        paymentMethod === "COD"
+                          ? "border-black bg-gray-50 shadow-sm"
+                          : "border-gray-200 bg-white"
                       }`}
                     >
-                      <input 
-                        type="radio" 
-                        name="payment" 
-                        checked={paymentMethod === "COD"} 
-                        onChange={() => setPaymentMethod("COD")} 
-                        className="w-4 h-4 text-black accent-black mr-4 cursor-pointer" 
+                      <input
+                        type="radio"
+                        name="payment"
+                        checked={paymentMethod === "COD"}
+                        onChange={() => setPaymentMethod("COD")}
+                        className="w-4 h-4 text-black accent-black mr-4 cursor-pointer"
                       />
                       <div>
-                        <span className="font-bold text-gray-900 block">Pay on Delivery (Cash / UPI)</span>
-                        <span className="text-xs text-gray-500">Pay securely when your resin artifact arrives at your doorstep.</span>
+                        <span className="font-bold text-gray-900 block">
+                          Pay on Delivery (Cash / UPI)
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          Pay securely when your resin artifact arrives at your
+                          doorstep.
+                        </span>
                       </div>
                     </label>
 
-                    {/* OPTION 2: ONLINE / CARD / UPI (FUTURE READY) */}
-                    <label 
+                    <label
                       onClick={() => setPaymentMethod("ONLINE")}
                       className={`flex items-center p-5 border-2 rounded-xl cursor-pointer transition-all ${
-                        paymentMethod === "ONLINE" ? "border-black bg-gray-50 shadow-sm" : "border-gray-200 bg-white"
+                        paymentMethod === "ONLINE"
+                          ? "border-black bg-gray-50 shadow-sm"
+                          : "border-gray-200 bg-white"
                       }`}
                     >
-                      <input 
-                        type="radio" 
-                        name="payment" 
-                        checked={paymentMethod === "ONLINE"} 
-                        onChange={() => setPaymentMethod("ONLINE")} 
-                        className="w-4 h-4 text-black accent-black mr-4 cursor-pointer" 
+                      <input
+                        type="radio"
+                        name="payment"
+                        checked={paymentMethod === "ONLINE"}
+                        onChange={() => setPaymentMethod("ONLINE")}
+                        className="w-4 h-4 text-black accent-black mr-4 cursor-pointer"
                       />
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-gray-900">Online Payment (UPI / Credit / Debit Card)</span>
-                          <span className="text-[10px] bg-black text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">Coming Soon</span>
+                          <span className="font-bold text-gray-900">
+                            Online UPI Payment (Scan QR & Pay)
+                          </span>
+                          <span className="text-[10px] bg-amber-500 text-black px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">
+                            Instant
+                          </span>
                         </div>
-                        <span className="text-xs text-gray-500">Instant online payment via Razorpay / Stripe integration.</span>
+                        <span className="text-xs text-gray-500">
+                          Scan QR via GPay, PhonePe, Paytm & enter UTR number.
+                        </span>
                       </div>
                     </label>
-
                   </div>
                 </div>
               </form>
@@ -336,7 +394,11 @@ const Checkout = () => {
                 disabled={loading}
                 className="w-full py-5 bg-white text-black text-lg font-bold rounded-2xl hover:bg-gray-200 hover:-translate-y-1 transform transition-all duration-300 disabled:opacity-50 disabled:hover:translate-y-0 cursor-pointer"
               >
-                {loading ? "Processing..." : `Confirm Order - ₹${total}`}
+                {loading
+                  ? "Processing..."
+                  : paymentMethod === "ONLINE"
+                    ? `Pay ₹${total} via QR`
+                    : `Confirm Order - ₹${total}`}
               </button>
 
               <p className="text-center text-xs text-gray-400 mt-6 font-medium flex justify-center items-center gap-2">
@@ -346,6 +408,76 @@ const Checkout = () => {
           </div>
         </div>
       </div>
+
+      {/* ========================================================= */}
+      {/* DYNAMIC LUXURY UPI QR CODE & UTR MODAL */}
+      {/* ========================================================= */}
+      {showQrModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fadeIn">
+          <div className="bg-[#0a0a0a] border border-[#D4AF37]/40 w-full max-w-md rounded-3xl p-8 shadow-2xl relative text-center">
+            {/* Close Modal */}
+            <button
+              onClick={() => setShowQrModal(false)}
+              className="absolute top-5 right-5 text-gray-400 hover:text-white text-xl font-bold"
+            >
+              ✕
+            </button>
+
+            <h3 className="text-2xl font-black text-white tracking-tight mb-1">
+              Scan & Pay Online
+            </h3>
+            <p className="text-xs font-bold text-[#D4AF37] uppercase tracking-widest mb-6">
+              Amount to Pay: ₹{total}
+            </p>
+            {/* 10-MINUTE COUNTDOWN TIMER BADGE */}
+            <div className="inline-block bg-yellow-500/10 border border-yellow-500/30 px-3 py-1 rounded-full mb-4">
+              <span className="text-xs font-black text-yellow-400 tracking-wider">
+                ⏳ Time Remaining: {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')} min
+              </span>
+            </div>
+
+            {/* QR CODE IMAGE CONTAINER */}
+            <div className="bg-white p-4 rounded-2xl inline-block shadow-lg mb-6 border-4 border-[#D4AF37]/30">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=yourstoreupi@paytm&pn=LuxeResin&am=${total}&cu=INR`}
+                alt="UPI QR Code"
+                className="w-48 h-48 mx-auto"
+              />
+              <p className="text-[10px] font-black text-black uppercase tracking-widest mt-2">
+                GPay / PhonePe / Paytm / UPI
+              </p>
+            </div>
+
+            <form onSubmit={handleVerifyAndPay} className="space-y-4 text-left">
+              <div>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] block mb-2">
+                  Enter UPI Transaction ID / UTR Number
+                </label>
+                <input
+                  type="text"
+                  value={utrNumber}
+                  onChange={(e) => setUtrNumber(e.target.value)}
+                  placeholder="e.g. 423561829012"
+                  required
+                  className="w-full bg-[#141414] border border-white/10 rounded-xl px-4 py-3 text-white font-mono font-bold tracking-wider focus:outline-none focus:border-[#D4AF37]"
+                />
+                <p className="text-[10px] text-gray-500 mt-1">
+                  Payment karne ke baad 12-digit ka UTR number yahan enter
+                  karein.
+                </p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-4 bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] text-black font-black uppercase tracking-[0.2em] text-xs rounded-xl hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all cursor-pointer mt-4"
+              >
+                {loading ? "Verifying..." : "Verify & Confirm Order 🚀"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
