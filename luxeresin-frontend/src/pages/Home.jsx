@@ -27,7 +27,7 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-[#050505] text-gray-300 pb-20">
-      {/* 🚀 ULTRA-LUXURY CINEMATIC HERO SECTION */}
+      {/* ULTRA-LUXURY CINEMATIC HERO SECTION */}
       <div className="relative min-h-[70vh] flex items-center justify-center overflow-hidden bg-black text-center px-4">
         {/* Background Resin Art Image with Dark Overlay */}
         <div className="absolute inset-0 z-0">
