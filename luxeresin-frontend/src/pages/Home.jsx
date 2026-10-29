@@ -15,7 +15,7 @@ const Home = () => {
     dispatch(fetchProducts());
   }, [dispatch]);
 
-  // 💀 LUXURY SKELETON LOADER
+  // LUXURY SKELETON LOADER
   const SkeletonLoader = () => (
     <div className="bg-[#0a0a0a] rounded-2xl border border-white/5 p-4 animate-pulse">
       <div className="bg-[#1a1a1a] h-64 rounded-xl w-full mb-4"></div>
