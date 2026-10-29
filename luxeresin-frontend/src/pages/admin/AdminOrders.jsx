@@ -69,7 +69,7 @@ const AdminOrders = () => {
                                         </span>
                                     </td>
 
-                                    {/* 🚀 TOTAL PAID & PAYMENT STATUS BADGE */}
+                                    {/* TOTAL PAID & PAYMENT STATUS BADGE */}
                                     <td className="px-6 py-5">
                                         <p className="font-bold text-[#D4AF37] text-lg tracking-tight">₹{order.finalTotal}</p>
                                         <div className="flex items-center gap-1.5 mt-1.5">
