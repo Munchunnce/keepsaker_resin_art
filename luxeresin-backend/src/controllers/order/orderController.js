@@ -127,7 +127,7 @@ const orderController = {
 
             const savedOrder = await newOrder.save();
 
-            // 🚀 7. LOCK COUPON FOR THIS USER (Ab ye user dobara ye coupon nahi laga payega)
+            // 7. LOCK COUPON FOR THIS USER (Ab ye user dobara ye coupon nahi laga payega)
             if (validCoupon) {
                 await Coupon.updateOne(
                     { _id: validCoupon._id },
