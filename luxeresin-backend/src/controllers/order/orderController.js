@@ -238,7 +238,7 @@ const orderController = {
             const { error, value } = statusSchema.validate(req.body);
             if (error) return next(error);
 
-            // 🚀 SMART COD LOGIC: Agar order DELIVERED mark ho raha hai, toh payment apne aap COMPLETED ho jayega!
+            // SMART COD LOGIC: Agar order DELIVERED mark ho raha hai, toh payment apne aap COMPLETED ho jayega!
             if (value.orderStatus === 'DELIVERED' && !value.paymentStatus) {
                 value.paymentStatus = 'COMPLETED';
             }
