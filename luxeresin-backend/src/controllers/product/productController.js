@@ -4,9 +4,6 @@ import Joi from 'joi';
 import crypto from 'crypto';
 import { v2 as cloudinary } from 'cloudinary';
 import fs from 'fs';
-
-// 🚀 NAYA: Aapki config file se secret keys import ki hain
-// (Agar aapki config file kisi aur folder mein hai, toh path thoda adjust kar lijiyega)
 import { 
     CLOUDINARY_CLOUD_NAME, 
     CLOUDINARY_API_KEY, 
