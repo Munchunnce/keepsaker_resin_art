@@ -26,7 +26,7 @@ app.use(cors({
 
 app.use(express.json()); // Parses incoming JSON payloads
 app.use(express.urlencoded({ extended: true })); // Parses URL-encoded data
-app.use(cookieParser()); // PRO FIX: Allows Express to read req.cookies
+app.use(cookieParser()); // Allows Express to read req.cookies
 
 app.use(morgan('dev')); // Logs API requests in the terminal (e.g., POST /api/v1/auth/login 200)
 
