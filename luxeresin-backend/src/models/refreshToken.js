@@ -7,7 +7,7 @@ const refreshTokenSchema = new mongoose.Schema(
         required: true,
         unique: true,
     },
-    // PRO FIX 1: Linked token to specific User
+    // 1: Linked token to specific User
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -19,7 +19,7 @@ const refreshTokenSchema = new mongoose.Schema(
   }
 );
 
-// PRO FIX 2: TTL Index - MongoDB automatically delete karega is document ko 7 din (604800 seconds) baad
+// 2: TTL Index - MongoDB automatically delete karega is document ko 7 din (604800 seconds) baad
 // 7 days = 7 * 24 * 60 * 60 = 604800 seconds
 refreshTokenSchema.index({ createdAt: 1 }, { expireAfterSeconds: 604800 });
 
