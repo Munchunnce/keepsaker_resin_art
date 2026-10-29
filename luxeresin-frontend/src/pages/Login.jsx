@@ -44,7 +44,7 @@ const Login = () => {
                 }} 
             />
 
-            {/* 🚀 FULL SCREEN HD ANIMATED BACKGROUND WITH 3D HOVER */}
+            {/* FULL SCREEN HD ANIMATED BACKGROUND WITH 3D HOVER */}
             <div className="absolute inset-0 z-0 overflow-hidden bg-black">
                 <img 
                     src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=100&w=2560&auto=format&fit=crop" 
