@@ -57,7 +57,7 @@ const Login = () => {
                 <div className="absolute inset-0 bg-[#D4AF37]/10 mix-blend-overlay pointer-events-none animate-pulse"></div>
             </div>
 
-            {/* 🚀 3D FLOATING CENTERED FORM */}
+            {/* 3D FLOATING CENTERED FORM */}
             <div className="relative z-10 w-full max-w-md bg-[#0a0a0a]/60 backdrop-blur-2xl rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] border border-white/10 hover:border-[#D4AF37]/50 hover:shadow-[0_20px_80px_rgba(212,175,55,0.3)] transition-all duration-500 transform-gpu hover:-translate-y-3 hover:scale-[1.02] p-8 sm:p-10">
                 
                 {/* BACK GLOW EFFECT */}
