@@ -104,7 +104,7 @@ const orderController = {
                 validCoupon = coupon;
             }
 
-            // 🚀 5. Final Billing Math (Synced with Cart.jsx & Checkout.jsx)
+            // 5. Final Billing Math (Synced with Cart.jsx & Checkout.jsx)
             const finalSubtotal = Math.max(0, itemsTotal - discountAmount);
             const shippingCharge = finalSubtotal > 5000 ? 0 : 250; // Free shipping over ₹5000
             const taxAmount = 0;
