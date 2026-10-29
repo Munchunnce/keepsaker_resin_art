@@ -15,7 +15,7 @@ const reviewController = {
         if (error) return next(error);
 
         try {
-            // PRO-LEVEL: Kya user ne ye product kharida hai aur order DELIVERED hai?
+            // Kya user ne ye product kharida hai aur order DELIVERED hai?
             const hasPurchased = await Order.findOne({
                 user: req.user._id,
                 orderStatus: 'DELIVERED', 
@@ -45,7 +45,7 @@ const reviewController = {
 
             // --- MATH TIME: Average Rating update karo ---
             const allReviews = await Review.find({ product: value.productId });
-            const totalReviews = allReviews.length; // ✅ Yahan FIX kar diya hai
+            const totalReviews = allReviews.length; //  Yahan FIX kar diya hai
             
             const totalRatingSum = allReviews.reduce((sum, item) => sum + item.rating, 0);
             const averageRating = totalRatingSum / totalReviews;
@@ -53,7 +53,7 @@ const reviewController = {
             // Product model update karo
             await Product.findByIdAndUpdate(value.productId, {
                 averageRating: Number(averageRating.toFixed(1)), 
-                totalReviews // ✅ Yahan FIX kar diya hai
+                totalReviews // Yahan FIX kar diya hai
             });
 
             return res.status(200).json({
