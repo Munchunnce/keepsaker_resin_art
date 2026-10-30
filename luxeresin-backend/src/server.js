@@ -1,4 +1,6 @@
 import express from 'express';
+import http from 'http';
+import { Server } from 'socket.io';
 import { APP_PORT } from './config/index.js';
 import connectDatabase from './config/database.js';
 import routes from './routes/index.js';
@@ -11,6 +13,28 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 
 const app = express();
+
+// Express app ko HTTP server mein wrap kiya Socket.io ke liye
+const server = http.createServer(app);
+
+// Socket.io Server Setup with CORS
+const io = new Server(server, {
+    cors: {
+        origin: ['http://localhost:3000', 'http://localhost:5173'], // React/Vite URLs
+        credentials: true,
+    }
+});
+
+// 'io' instance ko app mein daal diya taaki orderController ise use kar sake
+app.set('io', io);
+
+io.on('connection', (socket) => {
+    console.log('⚡ User connected to Live Socket:', socket.id);
+    
+    socket.on('disconnect', () => {
+        console.log('User disconnected:', socket.id);
+    });
+});
 
 // ==========================================
 // 1. GLOBAL MIDDLEWARES (Order is important)
@@ -48,8 +72,9 @@ const startServer = async () => {
         // Ensure Database connects BEFORE opening the server to traffic
         await connectDatabase();
 
-        app.listen(APP_PORT, () => {
+        server.listen(APP_PORT, () => {
             console.log(`🚀 Server running on port ${APP_PORT}`);
+            console.log(`⚡ Socket.io is active and listening`);
         });
     } catch (error) {
         console.error('❌ Server startup failed:', error.message);
