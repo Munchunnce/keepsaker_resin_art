@@ -21,3 +21,6 @@ export { default as couponController } from './order/couponController.js';
 
 // --- CUSTOM ART REQUEST Controller ---
 export { default as customArtController } from './order/customArtController.js';
+
+// --- Payment Controller ---
+export { default as paymentController } from './payment/paymentController.js'

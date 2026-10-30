@@ -3,7 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { placeOrder } from "../features/order/orderSlice";
 import { clearCartOnLogout } from "../features/cart/cartSlice";
+import axiosInstance from "../services/axiosInstance"; // Razorpay API call ke liye
 import toast from "react-hot-toast";
+
+// 🚀 Razorpay script load karne ka function
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -11,11 +23,7 @@ const Checkout = () => {
 
   const [isOrderSuccess, setIsOrderSuccess] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("COD");
-
-  // UPI Modal states
-  const [showQrModal, setShowQrModal] = useState(false);
-  const [utrNumber, setUtrNumber] = useState("");
-  const [timeLeft,setTimeLeft] = useState(600);
+  const [processingPayment, setProcessingPayment] = useState(false); // Naya state
 
   const {
     cart,
@@ -35,7 +43,6 @@ const Checkout = () => {
   const shipping = finalSubtotal > 5000 ? 0 : 250;
   const total = finalSubtotal + shipping;
 
-  // SMART PRE-FILL
   const userData = user?.user || user?.data || user;
   const existingAddress = userData?.address || {};
 
@@ -54,32 +61,11 @@ const Checkout = () => {
     }
   }, [items.length, navigate, isOrderSuccess]);
 
-  useEffect(() => {
-    // Agar modal band hai, toh kuch mat karo
-    if (!showQrModal) return;
-
-    // Timer start karo
-    const timer = setInterval(() => {
-      setTimeLeft((prevTime) => {
-        if (prevTime <= 1) {
-          clearInterval(timer); // Timer roko
-          setShowQrModal(false); // Modal band karo
-          setTimeout(() => toast.error("Payment session expired! Please try again."), 0);
-          return 600; // Timer wapas 10 min par reset karo
-        }
-        return prevTime - 1; // 1 second kam karo
-      });
-    }, 1000);
-
-    // Cleanup function: modal close hone par timer clear ho jayega
-    return () => clearInterval(timer);
-  }, [showQrModal]);
-
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // 1. Validation Check before triggering Modal or COD Order
+  // 1. Validation Check before triggering Order
   const handlePreCheckout = (e) => {
     e.preventDefault();
 
@@ -96,9 +82,9 @@ const Checkout = () => {
       return;
     }
 
-    // Agar ONLINE hai toh QR modal kholo
+    // 🚀 RAZORPAY TRIGGER LOGIC
     if (paymentMethod === "ONLINE") {
-      setShowQrModal(true);
+      handleRazorpayPayment(); // QR ki jagah seedha Razorpay modal khulega
       return;
     }
 
@@ -106,21 +92,98 @@ const Checkout = () => {
     executeOrderPlacement();
   };
 
-  // 2. Final Order Execution (For both COD and Verified ONLINE)
-  const executeOrderPlacement = async (verifiedUtr = null) => {
+  // 🚀 RAZORPAY INTEGRATION LOGIC
+  const handleRazorpayPayment = async () => {
     try {
+      setProcessingPayment(true);
+      const isLoaded = await loadRazorpayScript();
+      if (!isLoaded) {
+        toast.error("Razorpay failed to load. Check your internet connection.");
+        setProcessingPayment(false);
+        return;
+      }
+
+      // 1. Pehle Backend mein dummy order create karke calculation match karenge
+      // (Iske liye temporary Order Model mein entry jayegi validation ke liye)
       const orderPayload = {
-        shippingAddress: {
-          fullName: formData.fullName,
-          phone: formData.phone,
-          pincode: formData.pincode,
-          streetAddress: formData.streetAddress,
-          city: formData.city,
-          state: formData.state,
-        },
+        shippingAddress: formData,
         paymentMethod: paymentMethod,
         couponCode: appliedCoupon || null,
-        utrNumber: verifiedUtr, // Online payment ke liye UTR
+        utrNumber: null
+      };
+
+      // Order create karein taaki exact Razorpay order id generate ho
+      // 🚀 NOTE: Is flow ko aur optimize karne ke liye hum pehle ek razorpay order banate hain
+      const { data: orderData } = await axiosInstance.post("/order/checkout", orderPayload);
+      const createdOrder = orderData.data;
+
+      // Ab is order ki total amount par Razorpay Order create karenge backend mein
+      const { data: razorpayData } = await axiosInstance.post("/payment/create", { orderId: createdOrder._id });
+      const rzpOrder = razorpayData.data;
+
+      // 2. Razorpay Window open karenge
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID, // .env mein VITE_RAZORPAY_KEY_ID dalna hoga
+        amount: rzpOrder.amount,
+        currency: rzpOrder.currency,
+        name: "LuxeResin Art",
+        description: "Payment for Luxury Masterpiece",
+        image: "https://your-logo-url.png", // Apna logo daal sakte hain
+        order_id: rzpOrder.id,
+        handler: async function (response) {
+            // 3. Payment Verify karenge
+            try {
+                const verifyData = {
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_signature: response.razorpay_signature,
+                    orderId: createdOrder._id
+                };
+                
+                await axiosInstance.post("/payment/verify", verifyData);
+                
+                setIsOrderSuccess(true);
+                dispatch(clearCartOnLogout());
+                toast.success("Payment Successful! Order Confirmed. 🎉");
+                navigate("/my-orders");
+            } catch (verifyError) {
+                console.error("Razorpay Verification Error:", verifyError);
+                toast.error("Payment Verification Failed!");
+                setProcessingPayment(false);
+            }
+        },
+        prefill: {
+          name: formData.fullName,
+          email: userData?.email || "",
+          contact: formData.phone,
+        },
+        theme: {
+          color: "#D4AF37", // Apni website ka theme color
+        },
+      };
+
+      const rzpWindow = new window.Razorpay(options);
+      rzpWindow.on("payment.failed", function (response) {
+        console.error("Payment Failed Reason:", response.error.description);
+        toast.error("Payment Failed or Cancelled!");
+        setProcessingPayment(false);
+      });
+      rzpWindow.open();
+
+    } catch (error) {
+        toast.error(error.response?.data?.message || "Failed to initiate payment");
+        setProcessingPayment(false);
+    }
+  };
+
+  // 2. Final Order Execution (Only for COD now)
+  const executeOrderPlacement = async () => {
+    try {
+      const orderPayload = {
+        shippingAddress: formData,
+        paymentMethod: paymentMethod,
+        couponCode: appliedCoupon || null,
+        utrNumber: null, 
       };
 
       await dispatch(placeOrder(orderPayload)).unwrap();
@@ -132,20 +195,6 @@ const Checkout = () => {
     } catch (error) {
       toast.error(error || "Failed to process order.");
     }
-  };
-
-  // 3. Handle QR Modal Submit (UTR Verification)
-  const handleVerifyAndPay = (e) => {
-    e.preventDefault();
-    if (!utrNumber || utrNumber.trim().length < 8) {
-      toast.error(
-        "Please enter a valid 12-digit UTR / Transaction Reference Number.",
-      );
-      return;
-    }
-
-    setShowQrModal(false);
-    executeOrderPlacement(utrNumber.trim());
   };
 
   return (
@@ -315,14 +364,14 @@ const Checkout = () => {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-gray-900">
-                            Online UPI Payment (Scan QR & Pay)
+                            Pay Online (Razorpay)
                           </span>
                           <span className="text-[10px] bg-amber-500 text-black px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">
-                            Instant
+                            Instant & Secure
                           </span>
                         </div>
                         <span className="text-xs text-gray-500">
-                          Scan QR via GPay, PhonePe, Paytm & enter UTR number.
+                          Pay securely via UPI, Credit/Debit Card, or NetBanking.
                         </span>
                       </div>
                     </label>
@@ -391,14 +440,14 @@ const Checkout = () => {
               <button
                 type="submit"
                 form="checkout-form"
-                disabled={loading}
+                disabled={loading || processingPayment}
                 className="w-full py-5 bg-white text-black text-lg font-bold rounded-2xl hover:bg-gray-200 hover:-translate-y-1 transform transition-all duration-300 disabled:opacity-50 disabled:hover:translate-y-0 cursor-pointer"
               >
-                {loading
-                  ? "Processing..."
+                {loading || processingPayment
+                  ? "Processing Secure Payment..."
                   : paymentMethod === "ONLINE"
-                    ? `Pay ₹${total} via QR`
-                    : `Confirm Order - ₹${total}`}
+                    ? `Pay ₹${total} Now`
+                    : `Confirm COD Order - ₹${total}`}
               </button>
 
               <p className="text-center text-xs text-gray-400 mt-6 font-medium flex justify-center items-center gap-2">
@@ -408,76 +457,6 @@ const Checkout = () => {
           </div>
         </div>
       </div>
-
-      {/* ========================================================= */}
-      {/* DYNAMIC LUXURY UPI QR CODE & UTR MODAL */}
-      {/* ========================================================= */}
-      {showQrModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fadeIn">
-          <div className="bg-[#0a0a0a] border border-[#D4AF37]/40 w-full max-w-md rounded-3xl p-8 shadow-2xl relative text-center">
-            {/* Close Modal */}
-            <button
-              onClick={() => setShowQrModal(false)}
-              className="absolute top-5 right-5 text-gray-400 hover:text-white text-xl font-bold"
-            >
-              ✕
-            </button>
-
-            <h3 className="text-2xl font-black text-white tracking-tight mb-1">
-              Scan & Pay Online
-            </h3>
-            <p className="text-xs font-bold text-[#D4AF37] uppercase tracking-widest mb-6">
-              Amount to Pay: ₹{total}
-            </p>
-            {/* 10-MINUTE COUNTDOWN TIMER BADGE */}
-            <div className="inline-block bg-yellow-500/10 border border-yellow-500/30 px-3 py-1 rounded-full mb-4">
-              <span className="text-xs font-black text-yellow-400 tracking-wider">
-                ⏳ Time Remaining: {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')} min
-              </span>
-            </div>
-
-            {/* QR CODE IMAGE CONTAINER */}
-            <div className="bg-white p-4 rounded-2xl inline-block shadow-lg mb-6 border-4 border-[#D4AF37]/30">
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=yourstoreupi@paytm&pn=LuxeResin&am=${total}&cu=INR`}
-                alt="UPI QR Code"
-                className="w-48 h-48 mx-auto"
-              />
-              <p className="text-[10px] font-black text-black uppercase tracking-widest mt-2">
-                GPay / PhonePe / Paytm / UPI
-              </p>
-            </div>
-
-            <form onSubmit={handleVerifyAndPay} className="space-y-4 text-left">
-              <div>
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] block mb-2">
-                  Enter UPI Transaction ID / UTR Number
-                </label>
-                <input
-                  type="text"
-                  value={utrNumber}
-                  onChange={(e) => setUtrNumber(e.target.value)}
-                  placeholder="e.g. 423561829012"
-                  required
-                  className="w-full bg-[#141414] border border-white/10 rounded-xl px-4 py-3 text-white font-mono font-bold tracking-wider focus:outline-none focus:border-[#D4AF37]"
-                />
-                <p className="text-[10px] text-gray-500 mt-1">
-                  Payment karne ke baad 12-digit ka UTR number yahan enter
-                  karein.
-                </p>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-4 bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] text-black font-black uppercase tracking-[0.2em] text-xs rounded-xl hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all cursor-pointer mt-4"
-              >
-                {loading ? "Verifying..." : "Verify & Confirm Order 🚀"}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

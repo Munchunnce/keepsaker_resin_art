@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-import { loginController, registerController, userController, refreshController, categoryController, productController, cartController, orderController, couponController, customArtController } from "../controllers/index.js";
+import { loginController, registerController, userController, refreshController, categoryController, productController, cartController, orderController, couponController, customArtController, paymentController } from "../controllers/index.js";
 import auth from "../middlewares/auth.js";
 import admin from "../middlewares/admin.js";
 import reviewController from "../controllers/product/reviewController.js";
@@ -46,7 +46,11 @@ router.delete('/products/:id', auth, admin, productController.destroy);
 router.post('/cart', auth, cartController.addItem);
 router.get('/cart', auth, cartController.getCart);                  
 router.put('/cart/items/:itemId', auth, cartController.updateQuantity); 
-router.delete('/cart/items/:itemId', auth, cartController.removeItem); 
+router.delete('/cart/items/:itemId', auth, cartController.removeItem);
+
+// --- payment ---
+router.post('/payment/create', auth, paymentController.createRazorpayOrder);
+router.post('/payment/verify', auth, paymentController.verifyPayment);
 
 // --- Order Routes ---
 router.post('/order/checkout', auth, orderController.placeOrder);
