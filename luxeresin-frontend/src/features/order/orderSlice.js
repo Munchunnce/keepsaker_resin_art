@@ -70,6 +70,22 @@ const orderSlice = createSlice({
     reducers: {
         clearCurrentOrder: (state) => {
             state.currentOrder = null;
+        },
+        // Socket.io ke through Live Updates handle karne ke liye (Bina API call ke)
+        updateOrderLive: (state, action) => {
+            const updatedOrder = action.payload;
+            
+            // 1. Agar Customer ka 'myOrders' open hai, toh wahan update karo
+            const myIndex = state.myOrders.findIndex(o => o._id === updatedOrder._id);
+            if (myIndex !== -1) {
+                state.myOrders[myIndex] = updatedOrder;
+            }
+
+            // 2. Agar Admin ka 'allOrders' table open hai, toh wahan update karo
+            const allIndex = state.allOrders.findIndex(o => o._id === updatedOrder._id);
+            if (allIndex !== -1) {
+                state.allOrders[allIndex] = updatedOrder;
+            }
         }
     },
     extraReducers: (builder) => {
@@ -131,5 +147,5 @@ const orderSlice = createSlice({
     }
 });
 
-export const { clearCurrentOrder } = orderSlice.actions;
+export const { clearCurrentOrder, updateOrderLive } = orderSlice.actions;
 export default orderSlice.reducer;

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchMyOrders } from '../features/order/orderSlice';
+import { fetchMyOrders, updateOrderLive } from '../features/order/orderSlice';
 import { fetchMyCustomRequests, acceptCustomArtQuote } from '../features/customArt/customArtSlice';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { io } from 'socket.io-client';
 
 // YAHAN APNA ASALI PHONEPE / UPI ID DAALEIN
 const MERCHANT_UPI_ID = 'yourphonepe@ybl'; 
@@ -42,6 +43,37 @@ const MyOrders = () => {
     useEffect(() => {
         dispatch(fetchMyOrders());
         dispatch(fetchMyCustomRequests());
+        // =========================================================
+        //  LIVE SOCKET.IO MAGIC - REAL-TIME STATUS UPDATES
+        // =========================================================
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+        const socketUrl = apiBaseUrl.replace('/api/v1/auth', '');
+        const socket = io(socketUrl);
+
+        socket.on("order-status-updated", (updatedOrder) => {
+            // Live status update in Redux (bina page refresh)
+            dispatch(updateOrderLive(updatedOrder));
+            
+            // User ko ek premium chamakta hua Toast dikhao
+            toast.success(
+                `Wow! Your order status just updated to ${updatedOrder.orderStatus} ⚡`, 
+                {
+                    icon: '🚀',
+                    style: { 
+                        borderRadius: '10px', 
+                        background: '#111', 
+                        color: '#D4AF37', 
+                        border: '1px solid rgba(212,175,55,0.4)',
+                        fontWeight: 'bold'
+                    }
+                }
+            );
+        });
+
+        // Cleanup function (Performance ke liye socket disconnect karna zaroori hai)
+        return () => {
+            socket.disconnect();
+        };
     }, [dispatch]);
 
     // 5-MINUTE LIVE COUNTDOWN TIMER LOGIC

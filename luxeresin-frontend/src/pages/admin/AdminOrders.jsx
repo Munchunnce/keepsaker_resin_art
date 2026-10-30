@@ -1,14 +1,46 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAllOrders, updateOrderStatus } from '../../features/order/orderSlice';
+import { fetchAllOrders, updateOrderLive, updateOrderStatus } from '../../features/order/orderSlice';
 import toast from 'react-hot-toast';
+import { io } from 'socket.io-client';
 
 const AdminOrders = () => {
     const dispatch = useDispatch();
     const { allOrders, loading } = useSelector((state) => state.order);
+    
 
     useEffect(() => {
         dispatch(fetchAllOrders());
+        // =========================================================
+        // 🚀 LIVE SOCKET.IO MAGIC FOR ADMIN DASHBOARD
+        // =========================================================
+        // NOTE: Agar backend port 8000 ya koi aur hai, toh yahan change karein
+        // 1. Apne environment variable se poora URL uthaiye
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+        // 2. Usme se '/api/v1/auth' ko hata dijiye taaki sirf base URL bache
+        const socketUrl = apiBaseUrl.replace('/api/v1/auth', '');
+        const socket = io(socketUrl);
+        socket.on("connect", () => {
+            console.log("✅ Admin Socket Connected! ID:", socket.id);
+        });
+
+        // 1. Agar koi customer NAYA ORDER place karta hai (Live notification)
+        socket.on("new-order-placed", (newOrder) => {
+            toast.success(`🚨 New Order Alert! #${newOrder._id.slice(-6).toUpperCase()} placed just now.`, {
+                style: { background: '#0a0a0a', color: '#D4AF37', border: '1px solid #D4AF37' }
+            });
+            // Naya order aate hi list refresh kar lo
+            dispatch(fetchAllOrders()); 
+        });
+
+        // 2. Agar koi status change hota hai (Sync with Redux)
+        socket.on("order-status-updated", (updatedOrder) => {
+            dispatch(updateOrderLive(updatedOrder));
+        });
+
+        return () => {
+            socket.disconnect();
+        };
     }, [dispatch]);
 
     const safeOrders = Array.isArray(allOrders) ? allOrders : [];
