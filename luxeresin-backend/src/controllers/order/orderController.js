@@ -23,6 +23,14 @@ const orderController = {
         if (error) return next(error);
 
         try {
+            // SECURITY: Duplicate UTR Check
+            if (value.paymentMethod === 'ONLINE' && value.utrNumber) {
+                const existingOrderWithUtr = await Order.findOne({ utrNumber: value.utrNumber });
+                if (existingOrderWithUtr) {
+                    return next(CustomErrorHandler.badRequest('This UTR/Transaction ID has already been used for another order! Please enter a valid one.'));
+                }
+            }
+
             // 2. Fetch User's Cart
             const cart = await Cart.findOne({ user: req.user._id });
             if (!cart || cart.items.length === 0) {
@@ -137,6 +145,12 @@ const orderController = {
 
             // 8. EMPTY THE CART
             await Cart.findOneAndDelete({ user: req.user._id });
+
+            // REAL-TIME MAGIC: Notify Admin Dashboard immediately!
+            const io = req.app.get('io');
+            if (io) {
+                io.emit('new-order-placed', savedOrder);
+            }
 
             return res.status(201).json({
                 success: true,
@@ -253,6 +267,12 @@ const orderController = {
 
             if (!updatedOrder) {
                 return next(CustomErrorHandler.notFound('Order not found!'));
+            }
+
+            // REAL-TIME MAGIC: Notify Customer's 'My Orders' Page immediately!
+            const io = req.app.get('io');
+            if (io) {
+                io.emit('order-status-updated', updatedOrder);
             }
 
             return res.status(200).json({
