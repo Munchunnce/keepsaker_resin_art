@@ -66,7 +66,7 @@ const paymentController = {
                         utrNumber: razorpay_payment_id // Asli transaction ID save karo
                     },
                     { new: true }
-                ).populate('user', 'name email');
+                ).populate('user', 'full_name email');
 
                 // 🚀 LIVE MAGIC: Admin aur Customer dono ko instant update bhejo
                 const io = req.app.get('io');
@@ -96,6 +96,28 @@ const paymentController = {
                 } catch (emailError) {
                     console.error("Email sending failed, but order was placed:", emailError);
                     // Yahan hum order fail nahi kar rahe, taaki customer ka process na ruke
+                }
+                // 🔔 NODEMAILER: Admin ko Notification bhejo
+                try {
+                    const adminEmailTemplate = `
+                        <div style="font-family: Arial, sans-serif; padding: 20px; border: 2px dashed #333;">
+                            <h2 style="color: #333;">New Order Received! 🚨</h2>
+                            <p><strong>Order Value:</strong> ₹${updatedOrder.finalTotal}</p>
+                            <p><strong>Customer Name:</strong> ${updatedOrder.shippingAddress.fullName}</p>
+                            <p><strong>Customer Phone:</strong> ${updatedOrder.shippingAddress.phone}</p>
+                            <p><strong>Shipping City:</strong> ${updatedOrder.shippingAddress.city}, ${updatedOrder.shippingAddress.state}</p>
+                            <hr style="border: 0; border-top: 1px solid #ccc; my: 20px;">
+                            <p>Check the admin dashboard for full details and to process the shipment.</p>
+                        </div>
+                    `;
+
+                    await sendEmail({
+                        email: "vimalkumarak478@gmail.com", //  Yahan aap apni main personal admin email daaliye jahan aap notifications chahte hain
+                        subject: `NEW ORDER ALERT - ₹${updatedOrder.finalTotal} from ${updatedOrder.shippingAddress.city}`,
+                        message: adminEmailTemplate
+                    });
+                } catch (adminEmailError) {
+                    console.error("Admin notification email failed:", adminEmailError);
                 }
 
                 return res.status(200).json({
