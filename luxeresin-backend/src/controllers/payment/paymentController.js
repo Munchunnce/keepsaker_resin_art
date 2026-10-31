@@ -72,6 +72,30 @@ const paymentController = {
                 if (io) {
                     io.emit('order-status-updated', updatedOrder);
                 }
+                // ✉️ NODEMAILER: Customer ko Order Confirmation Email bhejo
+                try {
+                    const emailTemplate = `
+                        <div style="font-family: Arial, sans-serif; max-w-md; margin: auto; padding: 20px; border: 1px solid #D4AF37; border-radius: 10px;">
+                            <h2 style="color: #D4AF37; text-align: center;">LuxeResin Art</h2>
+                            <h3>Order Confirmation 🚀</h3>
+                            <p>Hi ${updatedOrder.user.name || 'Customer'},</p>
+                            <p>Thank you for your premium purchase! Your payment of <strong>₹${updatedOrder.finalTotal}</strong> was successful.</p>
+                            <p><strong>Order ID:</strong> ${updatedOrder._id}</p>
+                            <p><strong>Transaction ID:</strong> ${razorpay_payment_id}</p>
+                            <hr style="border: 0; border-top: 1px solid #eee; my: 20px;">
+                            <p style="font-size: 12px; color: #777;">We are preparing your masterpiece. You will receive another update once it is shipped.</p>
+                        </div>
+                    `;
+
+                    await sendEmail({
+                        email: updatedOrder.user.email,
+                        subject: `LuxeResin Art - Order Confirmed! (ID: ${updatedOrder._id})`,
+                        message: emailTemplate
+                    });
+                } catch (emailError) {
+                    console.error("Email sending failed, but order was placed:", emailError);
+                    // Yahan hum order fail nahi kar rahe, taaki customer ka process na ruke
+                }
 
                 return res.status(200).json({
                     success: true,
