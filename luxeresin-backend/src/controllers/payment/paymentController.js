@@ -2,6 +2,7 @@ import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import { Order } from '../../models/index.js';
 import CustomErrorHandler from '../../services/CustomErrorHandler.js';
+import sendEmail from '../../utils/sendEmail.js';
 
 // Razorpay Initializer
 const razorpayInstance = new Razorpay({
@@ -78,7 +79,7 @@ const paymentController = {
                         <div style="font-family: Arial, sans-serif; max-w-md; margin: auto; padding: 20px; border: 1px solid #D4AF37; border-radius: 10px;">
                             <h2 style="color: #D4AF37; text-align: center;">LuxeResin Art</h2>
                             <h3>Order Confirmation 🚀</h3>
-                            <p>Hi ${updatedOrder.user.name || 'Customer'},</p>
+                            <p>Hi ${updatedOrder.user.full_name || 'Customer'},</p>
                             <p>Thank you for your premium purchase! Your payment of <strong>₹${updatedOrder.finalTotal}</strong> was successful.</p>
                             <p><strong>Order ID:</strong> ${updatedOrder._id}</p>
                             <p><strong>Transaction ID:</strong> ${razorpay_payment_id}</p>
