@@ -12,7 +12,8 @@ const Register = () => {
             const response = await axiosInstance.post('/register', {
                 name: data.name,
                 email: data.email,
-                password: data.password
+                password: data.password,
+                repeat_password: data.repeat_password
             });
 
             toast.success(response.data.message || 'Identity forged successfully! 💎');
@@ -109,6 +110,21 @@ const Register = () => {
                             })}
                         />
                         {errors.password && <p className="text-red-400 text-[10px] mt-1.5 font-bold uppercase tracking-wide drop-shadow-md">{errors.password.message}</p>}
+                    </div>
+                    <div className="group/input relative">
+                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-gray-300 mb-2 group-focus-within/input:text-[#D4AF37] transition-colors drop-shadow-md">
+                            Repeat Password
+                        </label>
+                        <input
+                            type="password"
+                            className={`w-full px-4 py-3 bg-[#050505]/80 border ${errors.repeat_password ? 'border-red-500/80' : 'border-white/10'} rounded-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] hover:border-white/30 transition-all shadow-inner text-sm font-bold`}
+                            placeholder="••••••••"
+                            {...register('repeat_password', { 
+                                required: 'Please confirm your password', 
+                                validate: (value, formValues) => value === formValues.password || 'Passwords do not match' 
+                            })}
+                        />
+                        {errors.repeat_password && <p className="text-red-400 text-[10px] mt-1.5 font-bold uppercase tracking-wide drop-shadow-md">{errors.repeat_password.message}</p>}
                     </div>
 
                     <button
