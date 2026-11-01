@@ -71,7 +71,7 @@ const reviewController = {
     async getProductReviews(req, res, next) {
         try {
             const reviews = await Review.find({ product: req.params.productId })
-                .populate('user', 'full_name') 
+                .populate('user', 'name fullName full_name') 
                 .sort({ createdAt: -1 });
 
             return res.status(200).json({

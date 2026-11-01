@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchProductBySlug, clearSingleProduct } from "../features/products/productSlice";
 import { addToCart } from "../features/cart/cartSlice";
 import toast from "react-hot-toast";
+import ProductReviews from "../components/common/ProductReviews";
 
 const SingleProduct = () => {
   const { slug } = useParams();
@@ -281,6 +282,10 @@ const SingleProduct = () => {
               {currentProduct.inStock ? `Add to Vault — ₹${finalPrice}` : "Currently Unavailable"}
             </button>
           </div>
+        </div>
+        {/* PRODUCT REVIEWS */}
+        <div className="mt-20">
+          <ProductReviews productId={currentProduct._id} />
         </div>
       </div>
     </div>
