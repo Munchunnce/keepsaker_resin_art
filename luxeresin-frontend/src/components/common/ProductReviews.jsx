@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import axiosInstance from '../services/axiosInstance.js';
+import axiosInstance from '../../services/axiosInstance.js';
 
 const ProductReviews = ({ productId }) => {
     const [reviews, setReviews] = useState([]);
@@ -16,9 +16,10 @@ const ProductReviews = ({ productId }) => {
     // Fetch Reviews ko useEffect ke andar rakha gaya hai
     useEffect(() => {
         const fetchReviews = async () => {
-            setLoading(true); // Pehle loading true karein
+            setLoading(true); 
             try {
-                const response = await axiosInstance.get(`/reviews/${productId}`);
+                // YAHAN FIX HAI 1: /reviews/${productId} ko /product/${productId}/reviews kiya hai
+                const response = await axiosInstance.get(`/product/${productId}/reviews`);
                 setReviews(response.data.data);
             } catch (error) {
                 console.error('Failed to fetch reviews', error);
@@ -40,7 +41,8 @@ const ProductReviews = ({ productId }) => {
 
         setIsSubmitting(true);
         try {
-            const response = await axiosInstance.post('/reviews', {
+            // YAHAN FIX HAI 2: /reviews ko /product/review kiya hai
+            const response = await axiosInstance.post('/product/review', {
                 productId,
                 rating,
                 comment
@@ -51,7 +53,6 @@ const ProductReviews = ({ productId }) => {
             setComment('');
             setShowForm(false);
             
-            // YAHAN CHANGE HAI 👇 (API dobara bulane ki jagah, naya data array mein aage daal diya)
             if (response.data.data) {
                 setReviews(prevReviews => [response.data.data, ...prevReviews]); 
             }
