@@ -3,7 +3,7 @@ import CustomErrorHandler from '../../services/CustomErrorHandler.js';
 import Joi from 'joi';
 
 const reviewController = {
-    // 1. ADD / UPDATE REVIEW
+    // 1. ADD / UPDATE REVIEW 
     async addReview(req, res, next) {
         const reviewSchema = Joi.object({
             rating: Joi.number().min(1).max(5).required(),
