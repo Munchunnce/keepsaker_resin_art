@@ -12,7 +12,7 @@ const AdminOrders = () => {
     useEffect(() => {
         dispatch(fetchAllOrders());
         // =========================================================
-        // 🚀 LIVE SOCKET.IO MAGIC FOR ADMIN DASHBOARD
+        // LIVE SOCKET.IO MAGIC FOR ADMIN DASHBOARD
         // =========================================================
         // NOTE: Agar backend port 8000 ya koi aur hai, toh yahan change karein
         // 1. Apne environment variable se poora URL uthaiye
