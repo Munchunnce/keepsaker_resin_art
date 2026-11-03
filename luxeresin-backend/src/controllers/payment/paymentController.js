@@ -73,7 +73,7 @@ const paymentController = {
                 if (io) {
                     io.emit('order-status-updated', updatedOrder);
                 }
-                // ✉️ NODEMAILER: Customer ko Order Confirmation Email bhejo
+                // NODEMAILER: Customer ko Order Confirmation Email bhejo
                 try {
                     const emailTemplate = `
                         <div style="font-family: Arial, sans-serif; max-w-md; margin: auto; padding: 20px; border: 1px solid #D4AF37; border-radius: 10px;">
