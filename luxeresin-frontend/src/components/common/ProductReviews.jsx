@@ -41,7 +41,7 @@ const ProductReviews = ({ productId }) => {
 
         setIsSubmitting(true);
         try {
-            // YAHAN FIX HAI 2: /reviews ko /product/review kiya hai
+            // 2: /reviews ko /product/review kiya hai
             const response = await axiosInstance.post('/product/review', {
                 productId,
                 rating,
