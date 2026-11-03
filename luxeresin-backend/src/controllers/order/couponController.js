@@ -106,7 +106,7 @@ const couponController = {
                 currentCartTotal += (itemPrice * item.quantity);
             }
 
-            // 🚀 FIXED TYPO: coupon.minCartValue - currentCartTotal
+            // FIXED TYPO: coupon.minCartValue - currentCartTotal
             if (currentCartTotal < coupon.minCartValue) {
                 return next(CustomErrorHandler.badRequest(`You need to add ₹${coupon.minCartValue - currentCartTotal} more to use this coupon.`));
             }
