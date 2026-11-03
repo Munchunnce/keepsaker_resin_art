@@ -58,7 +58,7 @@ const categoryController = {
         }
     },
 
-    // 🚀 3. GET SINGLE CATEGORY WITH ITS PRODUCTS (Category Page / Collection Page)
+    // 3. GET SINGLE CATEGORY WITH ITS PRODUCTS (Category Page / Collection Page)
     async show(req, res, next) {
         try {
             const category = await Category.findOne({ slug: req.params.slug, isActive: true });
