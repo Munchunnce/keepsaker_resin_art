@@ -31,7 +31,7 @@ const couponController = {
         }
     },
 
-    // 🚀 2. GET ALL COUPONS (Admin - Page refresh par saare coupons dikhane ke liye)
+    // 2. GET ALL COUPONS (Admin - Page refresh par saare coupons dikhane ke liye)
     async getAllCoupons(req, res, next) {
         try {
             const coupons = await Coupon.find().sort({ createdAt: -1 });
