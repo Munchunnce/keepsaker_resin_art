@@ -44,7 +44,7 @@ const categoryController = {
         }
     },
 
-    // 🚀 2. GET ALL ACTIVE CATEGORIES (Public - Navbar & Home Grid ke liye)
+    // 2. GET ALL ACTIVE CATEGORIES (Public - Navbar & Home Grid ke liye)
     async index(req, res, next) {
         try {
             const categories = await Category.find({ isActive: true }).sort({ createdAt: -1 });
