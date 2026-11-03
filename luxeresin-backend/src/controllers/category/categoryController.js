@@ -81,7 +81,7 @@ const categoryController = {
         }
     },
 
-    // 🚀 4. UPDATE CATEGORY (Admin Only)
+    // 4. UPDATE CATEGORY (Admin Only)
     async update(req, res, next) {
         const updateSchema = Joi.object({
             name: Joi.string().trim().optional(),
