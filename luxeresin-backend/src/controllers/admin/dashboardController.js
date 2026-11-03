@@ -69,7 +69,7 @@ const dashboardController = {
                     .select('orderStatus finalTotal createdAt')
             ]);
 
-            // 📊 3. Data Formatting (Gande arrays ko sundar JSON banana)
+            // 3. Data Formatting (Gande arrays ko sundar JSON banana)
             const stats = {
                 totalCustomers: totalUsers,
                 totalProducts: totalProducts,
