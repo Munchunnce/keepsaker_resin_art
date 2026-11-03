@@ -97,7 +97,7 @@ const paymentController = {
                     console.error("Email sending failed, but order was placed:", emailError);
                     // Yahan hum order fail nahi kar rahe, taaki customer ka process na ruke
                 }
-                // 🔔 NODEMAILER: Admin ko Notification bhejo
+                // NODEMAILER: Admin ko Notification bhejo
                 try {
                     const adminEmailTemplate = `
                         <div style="font-family: Arial, sans-serif; padding: 20px; border: 2px dashed #333;">
