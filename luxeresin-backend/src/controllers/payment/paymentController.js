@@ -68,7 +68,7 @@ const paymentController = {
                     { new: true }
                 ).populate('user', 'full_name email');
 
-                // 🚀 LIVE MAGIC: Admin aur Customer dono ko instant update bhejo
+                // LIVE MAGIC: Admin aur Customer dono ko instant update bhejo
                 const io = req.app.get('io');
                 if (io) {
                     io.emit('order-status-updated', updatedOrder);
