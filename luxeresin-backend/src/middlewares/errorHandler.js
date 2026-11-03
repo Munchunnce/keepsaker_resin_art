@@ -9,7 +9,7 @@ const errorHandler = (err, req, res, next) => {
     let data = {
         success: false,
         message: 'Internal server error',
-        // PRO FIX: Added err.stack to see the exact line number of the error during development
+        // Added err.stack to see the exact line number of the error during development
         ...(DEBUG_MODE === 'true' && { originalError: err.message, stack: err.stack }), 
     }
     
