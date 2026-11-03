@@ -18,7 +18,7 @@ const ProductReviews = ({ productId }) => {
         const fetchReviews = async () => {
             setLoading(true); 
             try {
-                // YAHAN FIX HAI 1: /reviews/${productId} ko /product/${productId}/reviews kiya hai
+                // 1: /reviews/${productId} ko /product/${productId}/reviews kiya hai
                 const response = await axiosInstance.get(`/product/${productId}/reviews`);
                 setReviews(response.data.data);
             } catch (error) {
