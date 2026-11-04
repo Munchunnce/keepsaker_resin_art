@@ -146,7 +146,7 @@ const AdminProductForm = () => {
         <div className="max-w-5xl mx-auto py-10 px-4">
             <div className="mb-10 flex items-center justify-between">
                 <div>
-                    {/* 🚀 Dynamic Heading */}
+                    {/* Dynamic Heading */}
                     <h2 className="text-3xl font-black text-white tracking-tight">
                         {isEditMode ? 'Update Masterpiece' : 'The Forge'}
                     </h2>
