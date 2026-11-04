@@ -14,7 +14,6 @@ const AdminOrders = () => {
         // =========================================================
         // LIVE SOCKET.IO MAGIC FOR ADMIN DASHBOARD
         // =========================================================
-        // NOTE: Agar backend port 8000 ya koi aur hai, toh yahan change karein
         // 1. Apne environment variable se poora URL uthaiye
         const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
         // 2. Usme se '/api/v1/auth' ko hata dijiye taaki sirf base URL bache
