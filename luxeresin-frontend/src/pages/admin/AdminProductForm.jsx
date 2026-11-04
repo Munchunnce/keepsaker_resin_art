@@ -37,7 +37,7 @@ const AdminProductForm = () => {
     );
     const [addons, setAddons] = useState([]);
 
-    // 🚀 1. CATEGORIES FETCH KAREN
+    // 1. CATEGORIES FETCH KAREN
     useEffect(() => {
         const fetchCats = async () => {
             try {
