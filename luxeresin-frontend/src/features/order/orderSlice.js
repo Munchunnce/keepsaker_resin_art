@@ -16,7 +16,7 @@ export const placeOrder = createAsyncThunk(
     }
 );
 
-// 🚀 2. FETCH MY ORDERS THUNK (Yehi miss ho gaya tha)
+// 2. FETCH MY ORDERS THUNK (Yehi miss ho gaya tha)
 export const fetchMyOrders = createAsyncThunk(
     'order/fetchMyOrders', 
     async (_, { rejectWithValue }) => {
