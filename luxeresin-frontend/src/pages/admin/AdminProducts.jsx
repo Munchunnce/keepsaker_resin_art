@@ -9,7 +9,7 @@ const AdminProducts = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     
-    // 🚀 REDUX SE ASLI PRODUCTS UTRAYE
+    // REDUX SE ASLI PRODUCTS UTRAYE
     const { items, loading } = useSelector((state) => state.products);
 
     useEffect(() => {
