@@ -255,7 +255,7 @@ const AdminProductForm = () => {
                             {isEditMode ? 'Current Image (Leave empty to keep current)' : 'High-Res Artifact Image'}
                         </label>
                         <div className="relative w-full bg-[#050505] border border-dashed border-white/20 rounded-sm px-4 py-8 text-center hover:border-[#D4AF37]/50 transition-colors cursor-pointer group">
-                            {/* 🚀 Image required sirf tab hoga jab naya product ban raha ho */}
+                            {/* Image required sirf tab hoga jab naya product ban raha ho */}
                             <input type="file" onChange={handleImageChange} accept="image/*" required={!isEditMode} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
                             <div className="text-gray-500 group-hover:text-[#D4AF37] transition-colors">
                                 <span className="text-2xl block mb-2">📸</span>
