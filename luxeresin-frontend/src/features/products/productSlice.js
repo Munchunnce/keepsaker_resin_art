@@ -41,9 +41,7 @@ const initialState = {
     items: [], 
     loading: true, 
     error: null,
-    
-    // Single Product State
-    currentProduct: null,
+    currentProduct: null, // Single Product State
     singleLoading: true,
     singleError: null,
 };
