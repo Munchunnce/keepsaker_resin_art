@@ -18,7 +18,7 @@ const AdminProducts = () => {
 
     const safeProducts = Array.isArray(items) ? items : [];
 
-    // 🚀 DELETE ARTIFACT LOGIC
+    // DELETE ARTIFACT LOGIC
     const handleDelete = async (id) => {
         if (window.confirm("Are you sure you want to delete this masterpiece from the Vault?")) {
             try {
