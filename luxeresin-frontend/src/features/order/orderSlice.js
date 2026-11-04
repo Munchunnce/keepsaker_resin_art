@@ -44,7 +44,7 @@ export const fetchAllOrders = createAsyncThunk(
     }
 );
 
-// 🚀 4. UPDATE ORDER STATUS (ADMIN ONLY)
+// 4. UPDATE ORDER STATUS (ADMIN ONLY)
 export const updateOrderStatus = createAsyncThunk(
     'order/updateOrderStatus',
     async ({ id, orderStatus }, { rejectWithValue }) => {
