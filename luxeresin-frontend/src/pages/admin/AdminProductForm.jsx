@@ -109,7 +109,7 @@ const AdminProductForm = () => {
                 toast.error('Failed to update artifact');
             }
         } 
-        // 🚀 CREATE PRODUCT LOGIC (POST)
+        // CREATE PRODUCT LOGIC (POST)
         else {
             if (!image) return toast.error('Please upload a high-res image!');
             if (!formData.category) return toast.error('Category is required!');
