@@ -84,7 +84,7 @@ const AdminProductForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // 🚀 UPDATE PRODUCT LOGIC (PUT)
+        // UPDATE PRODUCT LOGIC (PUT)
         if (isEditMode) {
             try {
                 const updatedData = {
