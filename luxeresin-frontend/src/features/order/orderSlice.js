@@ -123,7 +123,7 @@ const orderSlice = createSlice({
             })
             .addCase(fetchAllOrders.fulfilled, (state, action) => {
                 state.loading = false;
-                state.allOrders = action.payload; // 🚀 Data Redux mein save ho gaya
+                state.allOrders = action.payload; // Data Redux mein save ho gaya
             })
             .addCase(fetchAllOrders.rejected, (state, action) => {
                 state.loading = false;
