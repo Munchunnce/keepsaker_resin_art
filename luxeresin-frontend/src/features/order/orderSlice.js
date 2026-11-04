@@ -29,7 +29,7 @@ export const fetchMyOrders = createAsyncThunk(
     }
 );
 
-// 🚀 3. FETCH ALL ORDERS (ADMIN ONLY)
+// 3. FETCH ALL ORDERS (ADMIN ONLY)
 export const fetchAllOrders = createAsyncThunk(
     'order/fetchAllOrders', 
     async (_, { rejectWithValue }) => {
