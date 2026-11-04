@@ -34,7 +34,6 @@ export const fetchAllOrders = createAsyncThunk(
     'order/fetchAllOrders', 
     async (_, { rejectWithValue }) => {
         try {
-            // Note: Apne backend route ke hisaab se endpoint check kar lijiye. 
             // Agar route '/order/all' hai toh wo likhiye.
             const response = await axiosInstance.get('/order/all'); 
             return response.data.data; // controller.allOrders se 'data' array aayega
