@@ -44,7 +44,7 @@ const AdminProducts = () => {
                     <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mt-2">Manage Your Resin Collection</p>
                 </div>
                 
-                {/* 🚀 ADD ARTIFACT BUTTON */}
+                {/* ADD ARTIFACT BUTTON */}
                 <button 
                     onClick={() => navigate('/admin/products/new')}
                     className="relative px-6 py-3 bg-[#D4AF37] text-black font-black uppercase tracking-widest text-xs rounded-sm overflow-hidden group hover:scale-[1.02] transition-transform shadow-[0_0_20px_rgba(212,175,55,0.3)] cursor-pointer"
