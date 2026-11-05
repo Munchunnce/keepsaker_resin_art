@@ -113,7 +113,7 @@ const Checkout = () => {
       };
 
       // Order create karein taaki exact Razorpay order id generate ho
-      // 🚀 NOTE: Is flow ko aur optimize karne ke liye hum pehle ek razorpay order banate hain
+      // NOTE: Is flow ko aur optimize karne ke liye hum pehle ek razorpay order banate hain
       const { data: orderData } = await axiosInstance.post("/order/checkout", orderPayload);
       const createdOrder = orderData.data;
 
