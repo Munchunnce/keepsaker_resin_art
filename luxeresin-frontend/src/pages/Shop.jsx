@@ -61,7 +61,7 @@ const Shop = () => {
     <div className="min-h-screen bg-[#050505] text-gray-300 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         
-        {/* 👑 SHOP HEADER */}
+        {/* SHOP HEADER */}
         <div className="mb-10 border-b border-white/5 pb-6 flex flex-col md:flex-row justify-between items-end gap-4">
           <div>
             <p className="text-[10px] font-black text-[#D4AF37] uppercase tracking-[0.3em] mb-2">
