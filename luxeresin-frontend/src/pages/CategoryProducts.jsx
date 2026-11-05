@@ -26,7 +26,7 @@ const CategoryProducts = () => {
                 // Same logic as CategoryShowcase
                 const res = await axiosInstance.get(`/categories/${slug}`);
                 
-                console.log("Category Data Fetched:", res.data); // 🔍 Debugging ke liye check karein
+                console.log("Category Data Fetched:", res.data); // Debugging ke liye check karein
 
                 if (res.data.success) {
                     setCategoryData(res.data.data.category);
