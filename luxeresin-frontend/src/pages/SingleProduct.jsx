@@ -172,7 +172,7 @@ const SingleProduct = () => {
               </p>
             </div>
 
-            {/* 🎨 COLORS SELECTION */}
+            {/* COLORS SELECTION */}
             {currentProduct.colors?.length > 0 && (
               <div className="mt-8">
                 <h3 className="text-[10px] font-black tracking-[0.2em] text-gray-500 uppercase mb-4">Edition Color</h3>
