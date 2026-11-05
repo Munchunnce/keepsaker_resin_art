@@ -158,7 +158,7 @@ const SingleProduct = () => {
               {currentProduct.name}
             </h1>
             
-            {/* 🚀 DYNAMIC MAIN PRICE */}
+            {/* DYNAMIC MAIN PRICE */}
             <p className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] mt-4 transition-all duration-300">
               ₹{finalPrice}
             </p>
