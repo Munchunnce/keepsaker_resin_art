@@ -201,7 +201,7 @@ const Cart = () => {
                   <span className="font-bold text-white">₹{subtotal}</span>
                 </div>
 
-                {/* 🚀 DISCOUNT ROW */}
+                {/* DISCOUNT ROW */}
                 {discountAmount > 0 && (
                   <div className="flex justify-between text-[#FCF6BA] font-bold">
                     <span>Discount ({appliedCoupon})</span>
