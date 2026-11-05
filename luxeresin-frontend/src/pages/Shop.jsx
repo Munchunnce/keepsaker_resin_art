@@ -12,7 +12,7 @@ const Shop = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = searchParams.get("search") || "";
 
-  // 🚀 NAYA: Filter States
+  //  Filter States
   const [sort, setSort] = useState("");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
