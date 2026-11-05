@@ -177,7 +177,7 @@ const Cart = () => {
                 Vault Summary
               </h2>
 
-              {/* 🚀 COUPON INPUT FIELD (LUXURY FIX) */}
+              {/* COUPON INPUT FIELD (LUXURY FIX) */}
               <div className="mb-8 flex items-stretch bg-[#121212] border border-white/10 rounded-sm overflow-hidden focus-within:border-[#D4AF37] focus-within:ring-1 focus-within:ring-[#D4AF37] transition-all">
                 <input
                   type="text"
