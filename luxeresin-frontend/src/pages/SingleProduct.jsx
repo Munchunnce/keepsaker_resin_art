@@ -53,7 +53,7 @@ const SingleProduct = () => {
   const activeColor = selectedColor || currentProduct?.colors?.[0] || "";
   const activeSize = selectedSize || currentProduct?.sizes?.[0] || null;
 
-  // 🚀 DYNAMIC PRICE CALCULATOR
+  // DYNAMIC PRICE CALCULATOR
   const calculateFinalPrice = () => {
     let total = currentProduct.basePrice || 0;
     
