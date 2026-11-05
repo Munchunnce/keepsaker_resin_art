@@ -92,7 +92,7 @@ const Checkout = () => {
     executeOrderPlacement();
   };
 
-  // 🚀 RAZORPAY INTEGRATION LOGIC
+  // RAZORPAY INTEGRATION LOGIC
   const handleRazorpayPayment = async () => {
     try {
       setProcessingPayment(true);
