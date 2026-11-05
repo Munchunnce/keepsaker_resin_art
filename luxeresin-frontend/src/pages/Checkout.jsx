@@ -6,7 +6,7 @@ import { clearCartOnLogout } from "../features/cart/cartSlice";
 import axiosInstance from "../services/axiosInstance"; // Razorpay API call ke liye
 import toast from "react-hot-toast";
 
-// 🚀 Razorpay script load karne ka function
+// Razorpay script load karne ka function
 const loadRazorpayScript = () => {
   return new Promise((resolve) => {
     const script = document.createElement("script");
