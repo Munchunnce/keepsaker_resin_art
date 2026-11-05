@@ -82,7 +82,7 @@ const Checkout = () => {
       return;
     }
 
-    // 🚀 RAZORPAY TRIGGER LOGIC
+    // RAZORPAY TRIGGER LOGIC
     if (paymentMethod === "ONLINE") {
       handleRazorpayPayment(); // QR ki jagah seedha Razorpay modal khulega
       return;
