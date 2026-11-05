@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import { io } from 'socket.io-client';
 
 // YAHAN APNA ASALI PHONEPE / UPI ID DAALEIN
-const MERCHANT_UPI_ID = 'yourphonepe@ybl'; 
+const MERCHANT_UPI_ID = '9708723622@ybl'; 
 const MERCHANT_NAME = 'LuxeResin Art';
 
 // BESPOKE PROGRESS STEPS
