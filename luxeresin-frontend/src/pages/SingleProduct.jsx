@@ -73,7 +73,7 @@ const SingleProduct = () => {
 
   const finalPrice = calculateFinalPrice();
 
-  // 🚀 FIX 2: Addon Toggle Handler (Ab yeh niche click par use hoga)
+  // FIX 2: Addon Toggle Handler (Ab yeh niche click par use hoga)
   const toggleAddon = (addonName) => {
     setSelectedAddons(prev => 
       prev.includes(addonName) 
