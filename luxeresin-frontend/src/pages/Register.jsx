@@ -42,7 +42,7 @@ const Register = () => {
                     className="w-full h-full object-cover scale-110 opacity-85 contrast-125 saturate-[1.2] transition-all duration-[15000ms] ease-out group-hover:scale-125 group-hover:rotate-2 animate-[pulse_8s_ease-in-out_infinite]"
                 />
                 
-                {/* 🚀 LIGHTER OVERLAYS: Image ko bright rakhne ke liye opacity kam ki hai */}
+                {/* LIGHTER OVERLAYS: Image ko bright rakhne ke liye opacity kam ki hai */}
                 <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/70 via-[#050505]/20 to-[#050505]/80 transition-opacity duration-1000 group-hover:opacity-80"></div>
                 <div className="absolute inset-0 bg-[#D4AF37]/10 mix-blend-overlay pointer-events-none animate-pulse"></div>
             </div>
