@@ -145,7 +145,7 @@ const Shop = () => {
             </div>
           </div>
 
-          {/* 💎 RIGHT SIDE: PRODUCT GRID */}
+          {/* RIGHT SIDE: PRODUCT GRID */}
           <div className="w-full lg:w-3/4">
             {!loading && items.length === 0 ? (
               <div className="text-center py-20 bg-[#0a0a0a] border border-white/5 rounded-2xl shadow-2xl flex flex-col items-center justify-center">
