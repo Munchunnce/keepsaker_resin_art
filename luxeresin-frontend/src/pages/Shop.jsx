@@ -89,7 +89,7 @@ const Shop = () => {
         )}
 
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* 🎛️ LEFT SIDEBAR: FILTERS */}
+          {/* LEFT SIDEBAR: FILTERS */}
           <div className="w-full lg:w-1/4 flex flex-col gap-8">
             <div className="bg-[#0a0a0a] p-6 rounded-2xl border border-white/5 shadow-2xl lg:sticky lg:top-28">
               <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] mb-6 border-b border-white/10 pb-4">
