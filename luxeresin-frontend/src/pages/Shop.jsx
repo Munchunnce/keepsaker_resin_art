@@ -21,7 +21,7 @@ const Shop = () => {
   const { items, loading, error } = useSelector((state) => state.products);
 
   useEffect(() => {
-    // 🚀 REDUX API CALL (Search + Filters + Sort)
+    // REDUX API CALL (Search + Filters + Sort)
     const queryObj = {
       ...(searchQuery && { search: searchQuery }),
       ...(activeFilters.minPrice && { minPrice: activeFilters.minPrice }),
