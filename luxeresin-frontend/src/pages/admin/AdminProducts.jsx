@@ -37,7 +37,7 @@ const AdminProducts = () => {
 
     return (
         <div>
-            {/* 🚀 VAULT HEADER */}
+            {/* VAULT HEADER */}
             <div className="mb-10 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-6">
                 <div>
                     <h2 className="text-3xl font-black text-white tracking-tight">Product Vault</h2>
