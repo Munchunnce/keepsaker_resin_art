@@ -47,7 +47,7 @@ const SingleProduct = () => {
     return <div className="text-center py-20 bg-[#050505] text-white">Artifact not found.</div>;
   }
 
-  // FIX 1: Derived State (useEffect ki zaroorat nahi)
+  // 1: Derived State (useEffect ki zaroorat nahi)
   // Agar user ne kuch select nahi kiya, toh default backend ki pehli value dikhao
   const displayedMainImage = mainImage || currentProduct?.images?.[0] || "https://via.placeholder.com/800";
   const activeColor = selectedColor || currentProduct?.colors?.[0] || "";
