@@ -1,7 +1,7 @@
 @import "tailwindcss";
-/* html,
+html,
 body {
-  background-color: #050505;
-  overflow-x: hidden;
+  /* background-color: #050505; */
+  overflow-x: clip;
   max-width: 100%;
-} */
+}
