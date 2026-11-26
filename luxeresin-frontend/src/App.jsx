@@ -77,7 +77,7 @@ function App() {
             <Route path="/custom-art" element={<CustomArtRequest />} />
         </Route>
 
-        {/* 👑 ADMIN ONLY ROUTES (Sirf Boss logo ke liye) */}
+        {/* ADMIN ONLY ROUTES (Sirf Boss logo ke liye) */}
         <Route element={<ProtectedRoute allowedRoles={['Admin', 'admin']} />}>
             <Route element={<AdminLayout />}>
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />
