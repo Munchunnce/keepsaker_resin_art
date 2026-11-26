@@ -24,7 +24,7 @@ router.post('/logout', auth, loginController.logout);
 router.get('/admin/dashboard', [auth, admin], dashboardController.getDashboardStats);
 
 // --- Category Routes ---
-router.post('/categories', auth, admin, categoryController.store);
+// router.post('/categories', auth, admin, categoryController.store);
 
 // --- Product Routes ---
 // Yahan 'upload.single("image")' lagaya hai
@@ -70,9 +70,11 @@ router.post('/cart/apply-coupon', auth, couponController.applyCoupon);
 
 // --- Category Routes (Public & Admin) ---
 router.get('/categories', categoryController.index);
+router.get('/admin/categories', auth, admin, categoryController.adminIndex);
+router.post('/categories', auth, admin, upload.single('image'), categoryController.store);
 router.get('/categories/:slug', categoryController.show);
-router.put('/categories/:id', [auth, admin], categoryController.update);
-router.delete('/categories/:id', [auth, admin], categoryController.destroy);
+router.put('/categories/:id', auth, admin, upload.single('image'), categoryController.update);
+router.delete('/categories/:id', auth, admin, categoryController.destroy);
 
 // --- CUSTOM ART REQUEST ROUTES ---
 // POST: Customer apni photo aur detail submit karega
