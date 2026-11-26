@@ -9,6 +9,7 @@ const AdminLayout = () => {
         { name: 'Product Vault', path: '/admin/products', icon: '💎' },
         { name: 'Bespoke Requests', path: '/admin/custom-requests', icon: '🎨' },
         { name: 'Coupons Forge', path: '/admin/coupons', icon: '🎟️' },
+        { name: 'Vault Categories', path: '/admin/categories', icon: '🗂️' },
     ];
 
     return (

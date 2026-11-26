@@ -28,6 +28,7 @@ import CategoryProducts from './pages/CategoryProducts.jsx';
 import CategoryShowcase from './components/categoryShowcase/CategoryShowcase.jsx';
 import CustomArtRequest from './pages/CustomArtRequest.jsx';
 import AdminCustomRequests from './pages/admin/AdminCustomRequests.jsx';
+import AdminCategories from './pages/admin/AdminCategories.jsx';
 
 // Baaki bache hue Dummy Pages (Inko baad mein asali page se replace karenge)
 // const Home = () => <h1>Home Page (Public)</h1>;
@@ -83,6 +84,7 @@ function App() {
                 <Route path="/admin/orders" element={<AdminOrders />} />
                 <Route path="/admin/products" element={<AdminProducts />} />
                 <Route path="/admin/products/new" element={<AdminProductForm />} />
+                <Route path="/admin/categories" element={<AdminCategories />} />
                 <Route path="/admin/coupons" element={<AdminCoupons />} />
                 <Route path="/admin/custom-requests" element={<AdminCustomRequests />} />
             </Route>
