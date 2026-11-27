@@ -7,7 +7,7 @@ const couponSchema = new mongoose.Schema(
             required: [true, 'Coupon code is required'],
             unique: true,
             trim: true,
-            uppercase: true, // "diwali" likhega toh bhi "DIWALI" save hoga
+            uppercase: true,
         },
         discountType: {
             type: String,
@@ -17,11 +17,21 @@ const couponSchema = new mongoose.Schema(
         discountValue: {
             type: Number,
             required: [true, 'Discount value is required'],
-            // Agar PERCENTAGE hai toh 1-100 hoga, FLAT hai toh 500, 1000 kuch bhi ho sakta hai
+            min: [1, 'Discount value must be greater than 0'],
+            validate: {
+                validator: function (val) {
+                    if (this.discountType === 'PERCENTAGE') {
+                        return val <= 100;
+                    }
+                    return true;
+                },
+                message: 'Percentage discount cannot exceed 100%',
+            },
         },
         minCartValue: {
             type: Number,
-            default: 0, // Kam se kam kitne ka order hona chahiye is coupon ke liye
+            default: 0,
+            min: [0, 'Minimum cart value cannot be negative'],
         },
         expiryDate: {
             type: Date,
@@ -32,11 +42,11 @@ const couponSchema = new mongoose.Schema(
             default: true,
         },
         usedBy: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User'
-        }
-    ]
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'User',
+            },
+        ],
     },
     {
         timestamps: true,
