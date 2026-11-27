@@ -6,21 +6,21 @@ import { addToCart } from "../features/cart/cartSlice";
 import toast from "react-hot-toast";
 import ProductReviews from "../components/common/ProductReviews";
 
-const SingleProduct = () => {
-  const { slug } = useParams();
+const SingleProductView = ({ slug }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const { currentProduct, singleLoading, singleError } = useSelector(
-    (state) => state.products,
+    (state) => state.products
   );
+  const { isAuthenticated } = useSelector((state) => state.auth);
 
-  // States
+  // States (key={slug} ki wajah se naye product par automatically reset hongi)
   const [mainImage, setMainImage] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState(null);
   const [selectedAddons, setSelectedAddons] = useState([]);
-  
+
   const [isZooming, setIsZooming] = useState(false);
   const [zoomStyle, setZoomStyle] = useState({});
 
@@ -33,52 +33,58 @@ const SingleProduct = () => {
 
   if (singleLoading) {
     return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center text-[#D4AF37] font-black tracking-widest uppercase">
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center text-[#D4AF37] font-black tracking-widest uppercase animate-pulse">
         Decoding The Vault...
       </div>
     );
   }
 
   if (singleError) {
-    return <div className="text-center py-20 bg-[#050505] text-red-500 font-bold">{singleError}</div>;
+    return (
+      <div className="min-h-screen text-center py-20 bg-[#050505] text-red-500 font-bold">
+        {singleError}
+      </div>
+    );
   }
 
   if (!currentProduct) {
-    return <div className="text-center py-20 bg-[#050505] text-white">Artifact not found.</div>;
+    return (
+      <div className="min-h-screen text-center py-20 bg-[#050505] text-white">
+        Artifact not found.
+      </div>
+    );
   }
 
-  // 1: Derived State (useEffect ki zaroorat nahi)
-  // Agar user ne kuch select nahi kiya, toh default backend ki pehli value dikhao
-  const displayedMainImage = mainImage || currentProduct?.images?.[0] || "https://via.placeholder.com/800";
+  // Derived Defaults
+  const displayedMainImage =
+    mainImage || currentProduct?.images?.[0] || "https://via.placeholder.com/800";
   const activeColor = selectedColor || currentProduct?.colors?.[0] || "";
   const activeSize = selectedSize || currentProduct?.sizes?.[0] || null;
 
-  // DYNAMIC PRICE CALCULATOR
-  const calculateFinalPrice = () => {
-    let total = currentProduct.basePrice || 0;
-    
-    // Naya logic: ab activeSize use karenge taaki load hote hi price sahi dikhe
-    if (activeSize && activeSize.priceModifier) {
-      total += activeSize.priceModifier;
-    }
-    
-    // Addons ka extra price jodo
-    selectedAddons.forEach(addonName => {
-      const addon = currentProduct.addons?.find(a => a.addonName === addonName);
-      if (addon) total += addon.extraPrice;
-    });
+  // DYNAMIC PRICE CALCULATOR (Discount + Size + Addons)
+  const basePrice = Number(currentProduct.basePrice) || 0;
+  const discountPrice = Number(currentProduct.discountPrice) || 0;
+  const hasDiscount = discountPrice > 0 && discountPrice < basePrice;
+  const effectiveBasePrice = hasDiscount ? discountPrice : basePrice;
 
-    return total;
-  };
+  const sizeExtra = Number(activeSize?.priceModifier) || 0;
+  const addonsExtra = selectedAddons.reduce((sum, addonName) => {
+    const addon = currentProduct.addons?.find((a) => a.addonName === addonName);
+    return sum + (Number(addon?.extraPrice) || 0);
+  }, 0);
 
-  const finalPrice = calculateFinalPrice();
+  const finalPrice = effectiveBasePrice + sizeExtra + addonsExtra;
+  const originalFinalPrice = basePrice + sizeExtra + addonsExtra;
+  const discountPercent = hasDiscount
+    ? Math.round(((basePrice - discountPrice) / basePrice) * 100)
+    : 0;
 
-  // 2: Addon Toggle Handler (Ab yeh niche click par use hoga)
+  // Addon Toggle Handler
   const toggleAddon = (addonName) => {
-    setSelectedAddons(prev => 
+    setSelectedAddons((prev) =>
       prev.includes(addonName)
-        ? prev.filter(item => item !== addonName) // Pehle se hai toh hatao
-        : [...prev, addonName] // Nahi hai toh add karo
+        ? prev.filter((item) => item !== addonName)
+        : [...prev, addonName]
     );
   };
 
@@ -92,7 +98,6 @@ const SingleProduct = () => {
   return (
     <div className="bg-[#050505] min-h-screen pb-24 text-gray-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-20">
-        
         <button
           onClick={() => navigate(-1)}
           className="mb-8 flex items-center text-xs font-black uppercase tracking-widest text-[#D4AF37] hover:text-[#FCF6BA] transition-colors cursor-pointer"
@@ -101,11 +106,10 @@ const SingleProduct = () => {
         </button>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
-          
           {/* LEFT: IMAGE SECTION */}
           <div className="relative">
             <div className="md:sticky md:top-24 space-y-6">
-              <div 
+              <div
                 className="aspect-square bg-[#0a0a0a] rounded-2xl overflow-hidden border border-white/5 shadow-2xl relative cursor-crosshair group"
                 onMouseEnter={() => setIsZooming(true)}
                 onMouseLeave={() => setIsZooming(false)}
@@ -130,7 +134,11 @@ const SingleProduct = () => {
                         : "border-transparent opacity-50 hover:opacity-100"
                     }`}
                   >
-                    <img src={img} alt={`thumbnail-${idx}`} className="w-full h-full object-cover" />
+                    <img
+                      src={img}
+                      alt={`thumbnail-${idx}`}
+                      className="w-full h-full object-cover"
+                    />
                   </button>
                 ))}
               </div>
@@ -139,29 +147,43 @@ const SingleProduct = () => {
 
           {/* RIGHT: DETAILS SECTION */}
           <div className="relative flex flex-col pt-2 md:pt-6">
-            
-            {/* ZOOM OVERLAY MAGIC */}
+            {/* ZOOM OVERLAY */}
             {isZooming && (
-              <div 
-                className="hidden md:block absolute top-0 bottom-0 -left-6 -right-16 lg:-right-24 xl:-right-32 z-50 bg-[#0a0a0a] pointer-events-none rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-[#D4AF37]/30"
+              <div
+                className="hidden md:block absolute top-0 left-0 w-full h-[750px] z-40 bg-[#0a0a0a] pointer-events-none rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.85)] border border-[#D4AF37]/30"
                 style={{
                   backgroundImage: `url(${displayedMainImage})`,
-                  backgroundSize: '250%', 
-                  backgroundRepeat: 'no-repeat',
-                  ...zoomStyle, 
+                  backgroundSize: "200%",
+                  backgroundRepeat: "no-repeat",
+                  ...zoomStyle,
                 }}
               ></div>
             )}
 
-            <p className="text-[10px] font-black text-[#D4AF37] uppercase tracking-[0.4em] mb-2">Exclusive Artifact</p>
+            <p className="text-[10px] font-black text-[#D4AF37] uppercase tracking-[0.4em] mb-2">
+              Exclusive Artifact
+            </p>
             <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
               {currentProduct.name}
             </h1>
-            
-            {/* DYNAMIC MAIN PRICE */}
-            <p className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] mt-4 transition-all duration-300">
-              ₹{finalPrice}
-            </p>
+
+            {/* DYNAMIC MAIN PRICE + DISCOUNT BADGE */}
+            <div className="flex items-baseline flex-wrap gap-3 mt-4">
+              <p className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] transition-all duration-300">
+                ₹{finalPrice.toLocaleString("en-IN")}
+              </p>
+
+              {hasDiscount && (
+                <>
+                  <span className="text-lg font-bold text-gray-500 line-through">
+                    ₹{originalFinalPrice.toLocaleString("en-IN")}
+                  </span>
+                  <span className="px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-sm bg-green-500/15 text-green-400 border border-green-500/30">
+                    {discountPercent}% OFF
+                  </span>
+                </>
+              )}
+            </div>
 
             <div className="mt-8">
               <h3 className="text-[10px] font-black tracking-[0.2em] text-gray-500 uppercase mb-3 border-b border-white/5 pb-2">
@@ -175,7 +197,9 @@ const SingleProduct = () => {
             {/* COLORS SELECTION */}
             {currentProduct.colors?.length > 0 && (
               <div className="mt-8">
-                <h3 className="text-[10px] font-black tracking-[0.2em] text-gray-500 uppercase mb-4">Edition Color</h3>
+                <h3 className="text-[10px] font-black tracking-[0.2em] text-gray-500 uppercase mb-4">
+                  Edition Color
+                </h3>
                 <div className="flex flex-wrap gap-3">
                   {currentProduct.colors.map((color, idx) => (
                     <button
@@ -197,7 +221,9 @@ const SingleProduct = () => {
             {/* SIZES SELECTION */}
             {currentProduct.sizes?.length > 0 && (
               <div className="mt-8">
-                <h3 className="text-[10px] font-black tracking-[0.2em] text-gray-500 uppercase mb-4">Dimensions</h3>
+                <h3 className="text-[10px] font-black tracking-[0.2em] text-gray-500 uppercase mb-4">
+                  Dimensions
+                </h3>
                 <div className="flex flex-wrap gap-3">
                   {currentProduct.sizes.map((size, idx) => (
                     <button
@@ -211,7 +237,9 @@ const SingleProduct = () => {
                     >
                       <span>{size.sizeLabel}</span>
                       {size.priceModifier > 0 && (
-                        <span className="text-[9px] mt-1 opacity-70">+₹{size.priceModifier}</span>
+                        <span className="text-[9px] mt-1 opacity-70">
+                          +₹{Number(size.priceModifier).toLocaleString("en-IN")}
+                        </span>
                       )}
                     </button>
                   ))}
@@ -222,25 +250,45 @@ const SingleProduct = () => {
             {/* ADDONS SELECTION */}
             {currentProduct.addons?.length > 0 && (
               <div className="mt-8">
-                <h3 className="text-[10px] font-black tracking-[0.2em] text-gray-500 uppercase mb-4">Enhance Your Artifact</h3>
+                <h3 className="text-[10px] font-black tracking-[0.2em] text-gray-500 uppercase mb-4">
+                  Enhance Your Artifact
+                </h3>
                 <div className="space-y-3">
                   {currentProduct.addons.map((addon, idx) => {
                     const isSelected = selectedAddons.includes(addon.addonName);
                     return (
-                      <div 
-                        key={idx} 
+                      <div
+                        key={idx}
                         onClick={() => toggleAddon(addon.addonName)}
                         className={`flex items-center justify-between p-4 rounded-sm border cursor-pointer transition-all ${
-                          isSelected ? "border-[#D4AF37] bg-[#D4AF37]/5" : "border-white/5 bg-[#121212] hover:border-white/20"
+                          isSelected
+                            ? "border-[#D4AF37] bg-[#D4AF37]/5"
+                            : "border-white/5 bg-[#121212] hover:border-white/20"
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`w-4 h-4 rounded-sm border flex items-center justify-center ${isSelected ? "border-[#D4AF37] bg-[#D4AF37]" : "border-gray-600 bg-transparent"}`}>
-                             {isSelected && <span className="text-black text-[10px]">✔</span>}
+                          <div
+                            className={`w-4 h-4 rounded-sm border flex items-center justify-center ${
+                              isSelected
+                                ? "border-[#D4AF37] bg-[#D4AF37]"
+                                : "border-gray-600 bg-transparent"
+                            }`}
+                          >
+                            {isSelected && (
+                              <span className="text-black text-[10px]">✔</span>
+                            )}
                           </div>
-                          <span className={`text-sm font-bold ${isSelected ? "text-[#D4AF37]" : "text-gray-300"}`}>{addon.addonName}</span>
+                          <span
+                            className={`text-sm font-bold ${
+                              isSelected ? "text-[#D4AF37]" : "text-gray-300"
+                            }`}
+                          >
+                            {addon.addonName}
+                          </span>
                         </div>
-                        <span className="text-xs font-black text-gray-400">+₹{addon.extraPrice}</span>
+                        <span className="text-xs font-black text-gray-400">
+                          +₹{Number(addon.extraPrice).toLocaleString("en-IN")}
+                        </span>
                       </div>
                     );
                   })}
@@ -252,8 +300,18 @@ const SingleProduct = () => {
 
             <div className="flex flex-wrap items-center gap-6 text-xs font-black tracking-widest uppercase text-gray-500 mb-10">
               <div className="flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${currentProduct.inStock ? "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]" : "bg-red-500"}`}></span>
-                {currentProduct.inStock ? <span className="text-green-500">In Stock</span> : <span className="text-red-500">Sold Out</span>}
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    currentProduct.inStock
+                      ? "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]"
+                      : "bg-red-500"
+                  }`}
+                ></span>
+                {currentProduct.inStock ? (
+                  <span className="text-green-500">In Stock</span>
+                ) : (
+                  <span className="text-red-500">Sold Out</span>
+                )}
               </div>
               <div>|</div>
               <div>Lead Time: {currentProduct.leadTimeDays} Days</div>
@@ -262,27 +320,35 @@ const SingleProduct = () => {
             <button
               disabled={!currentProduct.inStock}
               onClick={async () => {
+                if (!isAuthenticated) {
+                  toast.error("Please login to add artifacts to your bag.");
+                  return navigate("/login");
+                }
+
                 try {
                   await dispatch(
                     addToCart({
-                      productId: currentProduct._id, 
+                      productId: currentProduct._id,
                       quantity: 1,
-                      selectedSize: activeSize?.sizeLabel || "Standard", 
+                      selectedSize: activeSize?.sizeLabel || "Standard",
                       selectedColor: activeColor || "Default",
-                      selectedAddons: selectedAddons 
+                      selectedAddons: selectedAddons,
                     })
                   ).unwrap();
                   toast.success(`${currentProduct.name} forged into your vault! 💎`);
                 } catch (err) {
-                  toast.error(err || 'Failed to add item to Cart');
+                  toast.error(err || "Failed to add item to Cart");
                 }
               }}
               className="w-full py-5 bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] text-black text-sm font-black uppercase tracking-[0.2em] rounded-sm hover:scale-[1.02] transform transition-all duration-300 disabled:opacity-50 disabled:hover:scale-100 shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_40px_rgba(212,175,55,0.6)] cursor-pointer"
             >
-              {currentProduct.inStock ? `Add to Vault — ₹${finalPrice}` : "Currently Unavailable"}
+              {currentProduct.inStock
+                ? `Add to Vault — ₹${finalPrice.toLocaleString("en-IN")}`
+                : "Currently Unavailable"}
             </button>
           </div>
         </div>
+
         {/* PRODUCT REVIEWS */}
         <div className="mt-20">
           <ProductReviews productId={currentProduct._id} />
@@ -290,6 +356,11 @@ const SingleProduct = () => {
       </div>
     </div>
   );
+};
+
+const SingleProduct = () => {
+  const { slug } = useParams();
+  return <SingleProductView key={slug} slug={slug} />;
 };
 
 export default SingleProduct;
