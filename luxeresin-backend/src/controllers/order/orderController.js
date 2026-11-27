@@ -1,21 +1,22 @@
 import { Order, Cart, Product, Coupon } from '../../models/index.js';
 import CustomErrorHandler from '../../services/CustomErrorHandler.js';
+import sendEmail from '../../utils/sendEmail.js';
 import Joi from 'joi';
 
 const orderController = {
     async placeOrder(req, res, next) {
-        // 1. Strict Validation: Address, Payment Method + Optional Coupon Code
+        // 1. Strict Validation
         const checkoutSchema = Joi.object({
             shippingAddress: Joi.object({
                 fullName: Joi.string().trim().required(),
-                phone: Joi.string().regex(/^[0-9]{10}$/).required().messages({'string.pattern.base': 'Invalid phone number'}),
+                phone: Joi.string().regex(/^[0-9]{10}$/).required().messages({ 'string.pattern.base': 'Invalid phone number' }),
                 pincode: Joi.string().regex(/^[0-9]{6}$/).required(),
-                streetAddress: Joi.string().required(),
-                city: Joi.string().required(),
-                state: Joi.string().required()
+                streetAddress: Joi.string().trim().required(),
+                city: Joi.string().trim().required(),
+                state: Joi.string().trim().required()
             }).required(),
             paymentMethod: Joi.string().valid('COD', 'ONLINE').required(),
-            couponCode: Joi.string().trim().uppercase().allow(null, '').optional(), // NAYA: Coupon Code allowed
+            couponCode: Joi.string().trim().uppercase().allow(null, '').optional(),
             utrNumber: Joi.string().trim().allow(null, '').optional()
         });
 
@@ -40,39 +41,45 @@ const orderController = {
             let itemsTotal = 0;
             const orderItems = [];
 
-            // 3. THE MATH ENGINE & INVENTORY GUARD (Zero Trust Policy)
+            // 3. ZERO-TRUST MATH ENGINE & INVENTORY GUARD
             for (let item of cart.items) {
                 const product = await Product.findById(item.product);
-                
+
                 if (!product || !product.isActive || !product.inStock) {
                     return next(CustomErrorHandler.badRequest(`Sorry, ${product ? product.name : 'an item'} is out of stock or unavailable.`));
                 }
 
-                let itemBasePrice = product.discountPrice > 0 ? product.discountPrice : product.basePrice;
+                const basePrice = Number(product.basePrice) || 0;
+                const discountPrice = Number(product.discountPrice) || 0;
+                const itemBasePrice = (discountPrice > 0 && discountPrice < basePrice) ? discountPrice : basePrice;
+
                 let extraSizePrice = 0;
                 let extraAddonsPrice = 0;
 
-                if (item.selectedSize && item.selectedSize !== 'Standard' && product.sizes) {
+                if (item.selectedSize && Array.isArray(product.sizes)) {
                     const sizeObj = product.sizes.find(s => s.sizeLabel === item.selectedSize);
-                    if (sizeObj) extraSizePrice = sizeObj.priceModifier;
+                    if (sizeObj) extraSizePrice = Number(sizeObj.priceModifier) || 0;
                 }
 
-                if (item.selectedAddons && item.selectedAddons.length > 0 && product.addons) {
-                    for (let addonName of item.selectedAddons) {
+                if (Array.isArray(item.selectedAddons) && item.selectedAddons.length > 0 && Array.isArray(product.addons)) {
+                    for (let addonEntry of item.selectedAddons) {
+                        const addonName = typeof addonEntry === 'string' ? addonEntry : addonEntry?.addonName;
                         const addonObj = product.addons.find(a => a.addonName === addonName);
-                        if (addonObj) extraAddonsPrice += addonObj.extraPrice;
+                        if (addonObj) extraAddonsPrice += Number(addonObj.extraPrice) || 0;
                     }
                 }
 
-                const itemFinalPrice = (itemBasePrice + extraSizePrice + extraAddonsPrice) * item.quantity;
+                const unitPrice = itemBasePrice + extraSizePrice + extraAddonsPrice;
+                const qty = Math.max(1, Number(item.quantity) || 1);
+                const itemFinalPrice = unitPrice * qty;
                 itemsTotal += itemFinalPrice;
 
                 orderItems.push({
                     productId: product._id,
                     name: product.name,
-                    image: product.images[0],
-                    priceAtPurchase: itemBasePrice,
-                    quantity: item.quantity,
+                    image: product.images?.[0] || '',
+                    priceAtPurchase: unitPrice,
+                    quantity: qty,
                     selectedSize: item.selectedSize,
                     selectedColor: item.selectedColor,
                     selectedAddons: item.selectedAddons,
@@ -91,7 +98,6 @@ const orderController = {
                     return next(CustomErrorHandler.badRequest('Applied coupon is invalid or expired.'));
                 }
 
-                // Check: Kya is user ne pehle ye coupon use kiya hai?
                 const alreadyUsed = coupon.usedBy?.some(
                     (userId) => userId.toString() === req.user._id.toString()
                 );
@@ -106,15 +112,15 @@ const orderController = {
                 if (coupon.discountType === 'FLAT') {
                     discountAmount = Math.min(coupon.discountValue, itemsTotal);
                 } else if (coupon.discountType === 'PERCENTAGE') {
-                    discountAmount = Math.round((itemsTotal * coupon.discountValue) / 100);
+                    discountAmount = Math.min(Math.round((itemsTotal * coupon.discountValue) / 100), itemsTotal);
                 }
 
                 validCoupon = coupon;
             }
 
-            // 5. Final Billing Math (Synced with Cart.jsx & Checkout.jsx)
+            // 5. Final Billing Math (100% Synced with Cart.jsx & Checkout.jsx)
             const finalSubtotal = Math.max(0, itemsTotal - discountAmount);
-            const shippingCharge = finalSubtotal > 5000 ? 0 : 250; // Free shipping over ₹5000
+            const shippingCharge = (finalSubtotal >= 5000 || finalSubtotal === 0) ? 0 : 250;
             const taxAmount = 0;
             const finalTotal = finalSubtotal + shippingCharge + taxAmount;
 
@@ -128,28 +134,53 @@ const orderController = {
                 taxAmount,
                 discountAmount,
                 finalTotal,
+                couponCode: validCoupon ? validCoupon.code : null,
                 paymentMethod: value.paymentMethod,
                 orderStatus: 'PLACED',
-                utrNumber: value.utrNumber
+                utrNumber: value.utrNumber || null
             });
 
             const savedOrder = await newOrder.save();
 
-            // 7. LOCK COUPON FOR THIS USER (Ab ye user dobara ye coupon nahi laga payega)
-            if (validCoupon) {
-                await Coupon.updateOne(
-                    { _id: validCoupon._id },
-                    { $addToSet: { usedBy: req.user._id } }
-                );
-            }
+            // 7. COD vs ONLINE LIFECYCLE FIX:
+            // COD order turant confirm hota hai -> coupon lock + cart clear + admin socket + email
+            // ONLINE order ke liye ye sab payment verify hone ke baad hoga (taaki cancel karne par cart/coupon safe rahe)
+            if (value.paymentMethod === 'COD') {
+                if (validCoupon) {
+                    await Coupon.updateOne(
+                        { _id: validCoupon._id },
+                        { $addToSet: { usedBy: req.user._id } }
+                    );
+                }
 
-            // 8. EMPTY THE CART
-            await Cart.findOneAndDelete({ user: req.user._id });
+                await Cart.findOneAndDelete({ user: req.user._id });
 
-            // REAL-TIME MAGIC: Notify Admin Dashboard immediately!
-            const io = req.app.get('io');
-            if (io) {
-                io.emit('new-order-placed', savedOrder);
+                const io = req.app.get('io');
+                if (io) {
+                    io.emit('new-order-placed', savedOrder);
+                }
+
+                // Admin COD Order Notification (Non-blocking)
+                const adminEmail = process.env.ADMIN_EMAIL;
+                if (adminEmail) {
+                    try {
+                        await sendEmail({
+                            email: adminEmail,
+                            subject: `NEW COD ORDER - ₹${savedOrder.finalTotal} from ${savedOrder.shippingAddress.city}`,
+                            message: `
+                                <div style="font-family: Arial, sans-serif; padding: 20px; border: 2px dashed #D4AF37;">
+                                    <h2 style="color: #333;">New COD Order Received! 🚨</h2>
+                                    <p><strong>Order ID:</strong> ${savedOrder._id}</p>
+                                    <p><strong>Order Value:</strong> ₹${savedOrder.finalTotal}</p>
+                                    <p><strong>Customer:</strong> ${savedOrder.shippingAddress.fullName} (${savedOrder.shippingAddress.phone})</p>
+                                    <p><strong>Location:</strong> ${savedOrder.shippingAddress.city}, ${savedOrder.shippingAddress.state}</p>
+                                </div>
+                            `
+                        });
+                    } catch (emailErr) {
+                        console.error('Admin COD email failed:', emailErr);
+                    }
+                }
             }
 
             return res.status(201).json({
@@ -167,7 +198,7 @@ const orderController = {
     async myOrders(req, res, next) {
         try {
             const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
-            
+
             return res.status(200).json({
                 success: true,
                 message: 'Your order history fetched',
@@ -186,7 +217,7 @@ const orderController = {
 
             const [orders, totalOrders] = await Promise.all([
                 Order.find()
-                    .populate('user', 'name email')
+                    .populate('user', 'full_name name email')
                     .sort({ createdAt: -1 })
                     .skip(skip)
                     .limit(Number(limit)),
@@ -209,36 +240,6 @@ const orderController = {
         }
     },
 
-    // // 4. UPDATE ORDER STATUS (Admin Action)
-    // async updateStatus(req, res, next) {
-    //     try {
-    //         const { id } = req.params;
-
-    //         const statusSchema = Joi.object({
-    //             orderStatus: Joi.string().valid('PLACED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'),
-    //             paymentStatus: Joi.string().valid('PENDING', 'COMPLETED', 'FAILED', 'REFUNDED')
-    //         });
-
-    //         const { error, value } = statusSchema.validate(req.body);
-    //         if (error) return next(error);
-
-    //         const updatedOrder = await Order.findByIdAndUpdate(id, value, { new: true })
-    //                                         .populate('user', 'name email');
-
-    //         if (!updatedOrder) {
-    //             return next(CustomErrorHandler.notFound('Order not found!'));
-    //         }
-
-    //         return res.status(200).json({
-    //             success: true,
-    //             message: `Order status successfully updated to ${updatedOrder.orderStatus}`,
-    //             data: updatedOrder
-    //         });
-    //     } catch (err) {
-    //         return next(err);
-    //     }
-    // }
-
     // 4. UPDATE ORDER STATUS (Admin Action)
     async updateStatus(req, res, next) {
         try {
@@ -252,22 +253,23 @@ const orderController = {
             const { error, value } = statusSchema.validate(req.body);
             if (error) return next(error);
 
-            // SMART COD LOGIC: Agar order DELIVERED mark ho raha hai, toh payment apne aap COMPLETED ho jayega!
+            const existingOrder = await Order.findById(id);
+            if (!existingOrder) {
+                return next(CustomErrorHandler.notFound('Order not found!'));
+            }
+
+            // SMART COD LOGIC: DELIVERED hone par PENDING payment COMPLETED mark karo
             if (value.orderStatus === 'DELIVERED' && !value.paymentStatus) {
                 value.paymentStatus = 'COMPLETED';
             }
 
-            // Agar order CANCELLED ho gaya aur payment PENDING tha, toh FAILED kar do
-            if (value.orderStatus === 'CANCELLED' && !value.paymentStatus) {
+            // SAFE CANCEL LOGIC: Sirf tab FAILED mark karo jab payment PENDING tha (COMPLETED paid orders ko corrupt mat karo)
+            if (value.orderStatus === 'CANCELLED' && !value.paymentStatus && existingOrder.paymentStatus === 'PENDING') {
                 value.paymentStatus = 'FAILED';
             }
 
             const updatedOrder = await Order.findByIdAndUpdate(id, value, { new: true })
-                                            .populate('user', 'name email');
-
-            if (!updatedOrder) {
-                return next(CustomErrorHandler.notFound('Order not found!'));
-            }
+                .populate('user', 'full_name name email');
 
             // REAL-TIME MAGIC: Notify Customer's 'My Orders' Page immediately!
             const io = req.app.get('io');
