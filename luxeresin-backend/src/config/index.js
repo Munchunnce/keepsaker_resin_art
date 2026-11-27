@@ -12,6 +12,7 @@ export const {
     CLOUDINARY_CLOUD_NAME,
     CLOUDINARY_API_KEY,
     CLOUDINARY_API_SECRET,
+    ADMIN_EMAIL,
     SMTP_MAIL,
     SMTP_PASSWORD
 } = process.env;

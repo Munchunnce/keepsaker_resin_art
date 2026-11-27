@@ -161,7 +161,8 @@ const orderController = {
                 }
 
                 // Admin COD Order Notification (Non-blocking)
-                const adminEmail = process.env.ADMIN_EMAIL;
+                // const adminEmail = process.env.ADMIN_EMAIL;
+                const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_MAIL;
                 if (adminEmail) {
                     try {
                         await sendEmail({

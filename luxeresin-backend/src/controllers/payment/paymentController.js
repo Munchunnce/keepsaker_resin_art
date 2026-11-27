@@ -163,7 +163,8 @@ const paymentController = {
             }
 
             // NODEMAILER 2: Admin Notification Email (.env se)
-            const adminEmail = process.env.ADMIN_EMAIL;
+            // const adminEmail = process.env.ADMIN_EMAIL;
+            const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_MAIL;
             if (adminEmail) {
                 try {
                     const adminEmailTemplate = `
