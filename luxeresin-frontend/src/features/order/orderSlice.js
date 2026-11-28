@@ -1,10 +1,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../../services/axiosInstance';
 import { fetchCart } from '../cart/cartSlice';
+import { logoutUser } from '../auth/authSlice';
 
 // 1. PLACE ORDER THUNK
 export const placeOrder = createAsyncThunk(
-    'order/placeOrder', 
+    'order/placeOrder',
     async (orderData, { dispatch, rejectWithValue }) => {
         try {
             const response = await axiosInstance.post('/order/checkout', orderData);
@@ -18,7 +19,7 @@ export const placeOrder = createAsyncThunk(
 
 // 2. FETCH MY ORDERS THUNK
 export const fetchMyOrders = createAsyncThunk(
-    'order/fetchMyOrders', 
+    'order/fetchMyOrders',
     async (_, { rejectWithValue }) => {
         try {
             const response = await axiosInstance.get('/order/my-orders');
@@ -31,12 +32,11 @@ export const fetchMyOrders = createAsyncThunk(
 
 // 3. FETCH ALL ORDERS (ADMIN ONLY)
 export const fetchAllOrders = createAsyncThunk(
-    'order/fetchAllOrders', 
+    'order/fetchAllOrders',
     async (_, { rejectWithValue }) => {
         try {
-            // Agar route '/order/all' hai toh wo likhiye.
-            const response = await axiosInstance.get('/order/all'); 
-            return response.data.data; // controller.allOrders se 'data' array aayega
+            const response = await axiosInstance.get('/order/all');
+            return response.data.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch admin orders');
         }
@@ -48,9 +48,8 @@ export const updateOrderStatus = createAsyncThunk(
     'order/updateOrderStatus',
     async ({ id, orderStatus }, { rejectWithValue }) => {
         try {
-            // Apna backend route check kar lein (e.g., /order/admin/status/:id)
             const response = await axiosInstance.put(`/order/${id}/status`, { orderStatus });
-            return response.data.data; // Updated order return hoga
+            return response.data.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to update status');
         }
@@ -61,10 +60,11 @@ const orderSlice = createSlice({
     name: 'order',
     initialState: {
         currentOrder: null,
-        myOrders: [], 
+        myOrders: [],
         allOrders: [],
         loading: false,
         error: null,
+        adminError: null,
     },
     reducers: {
         clearCurrentOrder: (state) => {
@@ -73,7 +73,8 @@ const orderSlice = createSlice({
         // Socket.io ke through Live Updates handle karne ke liye (Bina API call ke)
         updateOrderLive: (state, action) => {
             const updatedOrder = action.payload;
-            
+            if (!updatedOrder?._id) return;
+
             // 1. Agar Customer ka 'myOrders' open hai, toh wahan update karo
             const myIndex = state.myOrders.findIndex(o => o._id === updatedOrder._id);
             if (myIndex !== -1) {
@@ -96,52 +97,76 @@ const orderSlice = createSlice({
             })
             .addCase(placeOrder.fulfilled, (state, action) => {
                 state.loading = false;
-                state.currentOrder = action.payload.data;
+                state.error = null;
+                state.currentOrder = action.payload?.data || null;
             })
             .addCase(placeOrder.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             })
-            // Fetch My Orders Cases
+
+            // Fetch My Orders Cases (Sirf Customer Error handle karega)
             .addCase(fetchMyOrders.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
             .addCase(fetchMyOrders.fulfilled, (state, action) => {
                 state.loading = false;
-                state.myOrders = action.payload;
+                state.error = null;
+                state.myOrders = Array.isArray(action.payload) ? action.payload : [];
             })
             .addCase(fetchMyOrders.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             })
-            // FETCH ALL ORDERS (ADMIN) Cases
+
+            // FETCH ALL ORDERS (ADMIN) Cases (Alag adminError — Customer UI par leak nahi hoga)
             .addCase(fetchAllOrders.pending, (state) => {
                 state.loading = true;
-                state.error = null;
+                state.adminError = null;
             })
             .addCase(fetchAllOrders.fulfilled, (state, action) => {
                 state.loading = false;
-                state.allOrders = action.payload; // Data Redux mein save ho gaya
+                state.adminError = null;
+                state.allOrders = Array.isArray(action.payload) ? action.payload : [];
             })
             .addCase(fetchAllOrders.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload;
+                state.adminError = action.payload;
             })
+
+            // UPDATE ORDER STATUS (ADMIN)
             .addCase(updateOrderStatus.fulfilled, (state, action) => {
-                const updatedOrder = action.payload; // Jo backend ne naya status bheja
-                
-                // 1. Admin ke allOrders array mein usko turant update karo
+                const updatedOrder = action.payload;
+                if (!updatedOrder?._id) return;
+
                 const index = state.allOrders.findIndex(o => o._id === updatedOrder._id);
                 if (index !== -1) {
                     state.allOrders[index] = updatedOrder;
                 }
 
-                // 2. Agar by chance customer ka myOrders bhi load hai toh wahan bhi update kar do
                 const myIndex = state.myOrders.findIndex(o => o._id === updatedOrder._id);
                 if (myIndex !== -1) {
                     state.myOrders[myIndex] = updatedOrder;
                 }
+            })
+
+            // LOGOUT CLEANUP (Sirf browser ki temporary Redux memory saaf karega, DB safe rahega)
+            .addCase(logoutUser.fulfilled, (state) => {
+                state.currentOrder = null;
+                state.myOrders = [];
+                state.allOrders = [];
+                state.loading = false;
+                state.error = null;
+                state.adminError = null;
+            })
+            .addCase(logoutUser.rejected, (state) => {
+                state.currentOrder = null;
+                state.myOrders = [];
+                state.allOrders = [];
+                state.loading = false;
+                state.error = null;
+                state.adminError = null;
             });
     }
 });

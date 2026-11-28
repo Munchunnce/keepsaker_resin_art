@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchMyOrders, updateOrderLive } from '../features/order/orderSlice';
+import { fetchAllOrders, fetchMyOrders, updateOrderLive } from '../features/order/orderSlice';
 import { fetchMyCustomRequests, acceptCustomArtQuote } from '../features/customArt/customArtSlice';
 import { useNavigate } from 'react-router-dom';
+import axiosInstance from '../services/axiosInstance';
 import toast from 'react-hot-toast';
 import { io } from 'socket.io-client';
 
@@ -66,6 +67,10 @@ const MyOrders = () => {
 
     const [activeTab, setActiveTab] = useState('STANDARD');
 
+    // ORDER CANCEL MODAL STATES
+    const [orderToCancel, setOrderToCancel] = useState(null);
+    const [cancellingOrderId, setCancellingOrderId] = useState(null);
+
     // PAYMENT MODAL STATES
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [timeLeft, setTimeLeft] = useState(300); // 5 Minutes (300 seconds)
@@ -96,8 +101,25 @@ const MyOrders = () => {
 
     // 2. LIVE SOCKET.IO MAGIC (User-Scoped — Doosre user ka update leak nahi hoga)
     useEffect(() => {
+        dispatch(fetchAllOrders());
+
+        // LIVE SOCKET.IO MAGIC FOR ADMIN DASHBOARD
         const socket = io(getSocketUrl());
 
+        socket.on('connect', () => {
+            console.log('✅ Admin Socket Connected! ID:', socket.id);
+        });
+
+        // 1. Naya order aate hi live notification + refresh
+        socket.on('new-order-placed', (newOrder) => {
+            const shortId = newOrder?._id ? newOrder._id.slice(-6).toUpperCase() : 'NEW';
+            toast.success(`🚨 New Order Alert! #${shortId} placed just now.`, {
+                style: { background: '#0a0a0a', color: '#D4AF37', border: '1px solid #D4AF37' },
+            });
+            dispatch(fetchAllOrders());
+        });
+
+        // 2. Status update sync with Redux
         socket.on('order-status-updated', (updatedOrder) => {
             if (!updatedOrder?._id) return;
 
@@ -106,32 +128,80 @@ const MyOrders = () => {
                     ? updatedOrder.user?._id
                     : updatedOrder.user;
 
-            // SECURITY FIX: Sirf logged-in user ke apne order par update aur toast dikhao
+            // Sirf logged-in user ke order par hi update aur toast chalega
             if (currentUserId && orderUserId && String(orderUserId) !== String(currentUserId)) {
                 return;
             }
 
             dispatch(updateOrderLive(updatedOrder));
+        });
 
-            toast.success(
-                `Order #${updatedOrder._id.slice(-8).toUpperCase()} updated to ${updatedOrder.orderStatus} ⚡`,
+        // 3. Customer ke order cancel karte hi Live Red Alert
+        socket.on('order-cancelled-by-customer', (cancelledOrder) => {
+            if (!cancelledOrder?._id) return;
+
+            const shortId = cancelledOrder._id.slice(-6).toUpperCase();
+            const customerName = cancelledOrder.shippingAddress?.fullName || 'Customer';
+            const isPrepaid = cancelledOrder.paymentStatus === 'COMPLETED';
+
+            toast.error(
+                `⚠️ Order #${shortId} cancelled by ${customerName}${isPrepaid ? ' (Prepaid — Refund Needed)' : ''}`,
                 {
-                    icon: '🚀',
+                    id: `admin-cancel-${cancelledOrder._id}`,
+                    duration: 6000,
                     style: {
-                        borderRadius: '10px',
-                        background: '#111',
-                        color: '#D4AF37',
-                        border: '1px solid rgba(212,175,55,0.4)',
-                        fontWeight: 'bold'
-                    }
+                        background: '#1a0505',
+                        color: '#f87171',
+                        border: '1px solid rgba(239, 68, 68, 0.5)',
+                        fontWeight: 'bold',
+                    },
                 }
             );
+
+            dispatch(updateOrderLive(cancelledOrder));
         });
 
         return () => {
             socket.disconnect();
         };
-    }, [dispatch, currentUserId]);
+    }, [dispatch]);
+    // useEffect(() => {
+    //     const socket = io(getSocketUrl());
+
+    //     socket.on('order-status-updated', (updatedOrder) => {
+    //         if (!updatedOrder?._id) return;
+
+    //         const orderUserId =
+    //             typeof updatedOrder.user === 'object'
+    //                 ? updatedOrder.user?._id
+    //                 : updatedOrder.user;
+
+    //         if (currentUserId && orderUserId && String(orderUserId) !== String(currentUserId)) {
+    //             return;
+    //         }
+
+    //         dispatch(updateOrderLive(updatedOrder));
+
+    //         toast.success(
+    //             `Order #${updatedOrder._id.slice(-8).toUpperCase()} updated to ${updatedOrder.orderStatus} ⚡`,
+    //             {
+    //                 id: `order-${updatedOrder._id}-${updatedOrder.orderStatus}`,
+    //                 icon: updatedOrder.orderStatus === 'CANCELLED' ? '⚠️' : '🚀',
+    //                 style: {
+    //                     borderRadius: '10px',
+    //                     background: '#111',
+    //                     color: '#D4AF37',
+    //                     border: '1px solid rgba(212,175,55,0.4)',
+    //                     fontWeight: 'bold'
+    //                 }
+    //             }
+    //         );
+    //     });
+
+    //     return () => {
+    //         socket.disconnect();
+    //     };
+    // }, [dispatch, currentUserId]);
 
     // 3. DRIFT-FREE 5-MINUTE LIVE COUNTDOWN TIMER (React 19 Safe)
     useEffect(() => {
@@ -152,6 +222,31 @@ const MyOrders = () => {
 
         return () => clearInterval(timer);
     }, [selectedRequest]);
+
+    // CUSTOMER ORDER CANCEL HANDLER
+    const handleConfirmCancelOrder = async () => {
+        if (!orderToCancel || cancellingOrderId) return;
+
+        try {
+            setCancellingOrderId(orderToCancel._id);
+            const { data } = await axiosInstance.put(`/order/cancel/${orderToCancel._id}`);
+            const updatedOrder = data?.data;
+
+            if (updatedOrder) {
+                dispatch(updateOrderLive(updatedOrder));
+            }
+
+            toast.success(
+                `Order #${orderToCancel._id.slice(-8).toUpperCase()} cancelled successfully.`,
+                { id: `order-${orderToCancel._id}-CANCELLED` }
+            );
+            setOrderToCancel(null);
+        } catch (error) {
+            toast.error(getErrorMessage(error, 'Failed to cancel order.'));
+        } finally {
+            setCancellingOrderId(null);
+        }
+    };
 
     const handleOpenPaymentModal = (req) => {
         setSelectedRequest(req);
@@ -333,7 +428,9 @@ const MyOrders = () => {
                             safeOrders.map((order) => {
                                 const status = order.orderStatus || 'PLACED';
                                 const isActiveGoldStatus = status === 'PLACED' || status === 'PROCESSING';
+                                const canCancel = status === 'PLACED' || status === 'PROCESSING';
                                 const isPaid = order.paymentStatus === 'COMPLETED';
+                                const txnRef = order.transactionId || order.utrNumber;
 
                                 return (
                                     <div
@@ -427,7 +524,7 @@ const MyOrders = () => {
                                             ))}
                                         </div>
 
-                                        {/* CARD FOOTER: DATE, SHIPPING & TOTAL */}
+                                        {/* CARD FOOTER: DATE, SHIPPING, CANCEL BUTTON & TOTAL */}
                                         <div className="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
                                             <div className="space-y-3">
                                                 <div>
@@ -449,10 +546,24 @@ const MyOrders = () => {
                                                     </p>
                                                 )}
 
-                                                {order.utrNumber && isPaid && (
+                                                {txnRef && isPaid && (
                                                     <p className="text-[10px] font-mono text-gray-500">
-                                                        TXN: {order.utrNumber}
+                                                        TXN: {txnRef}
                                                     </p>
+                                                )}
+
+                                                {/* CANCEL ORDER BUTTON (Only before SHIPPED) */}
+                                                {canCancel && (
+                                                    <div className="pt-1">
+                                                        <button
+                                                            type="button"
+                                                            disabled={cancellingOrderId === order._id}
+                                                            onClick={() => setOrderToCancel(order)}
+                                                            className="px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/60 rounded-sm transition-all cursor-pointer disabled:opacity-40"
+                                                        >
+                                                            {cancellingOrderId === order._id ? 'Cancelling...' : 'Cancel Order'}
+                                                        </button>
+                                                    </div>
                                                 )}
                                             </div>
 
@@ -673,9 +784,7 @@ const MyOrders = () => {
 
                                                 {/* Progress Line Container */}
                                                 <div className="relative px-1 sm:px-6">
-                                                    {/* Background Track Line */}
                                                     <div className="absolute top-5 left-7 right-7 sm:left-12 sm:right-12 h-1 bg-white/10 rounded-full z-0">
-                                                        {/* Animated Glowing Gold Progress Line */}
                                                         <div
                                                             className="h-full bg-gradient-to-r from-[#BF953F] via-[#FCF6BA] to-[#B38728] rounded-full transition-all duration-1000 ease-in-out shadow-[0_0_15px_rgba(212,175,55,0.75)]"
                                                             style={{
@@ -684,7 +793,6 @@ const MyOrders = () => {
                                                         />
                                                     </div>
 
-                                                    {/* Steps Flex Grid */}
                                                     <div className="relative z-10 flex justify-between items-start">
                                                         {BESPOKE_STEPS.map((step, idx) => {
                                                             const isCompleted = idx <= currentStepIdx;
@@ -725,6 +833,50 @@ const MyOrders = () => {
                     </div>
                 )}
             </div>
+
+            {/* ================================================================= */}
+            {/* ORDER CANCELLATION CONFIRMATION MODAL */}
+            {/* ================================================================= */}
+            {orderToCancel && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
+                    <div className="bg-gradient-to-b from-[#111111] to-[#070707] border border-red-500/35 rounded-2xl max-w-md w-full p-6 sm:p-7 text-white shadow-[0_30px_80px_rgba(0,0,0,0.95)]">
+                        <p className="text-[10px] font-black text-red-400 uppercase tracking-[0.25em]">
+                            Confirm Cancellation
+                        </p>
+                        <h3 className="text-xl font-black tracking-tight mt-1">
+                            Cancel Order #{orderToCancel._id?.slice(-8).toUpperCase()}?
+                        </h3>
+                        <p className="text-xs text-gray-400 mt-3 leading-relaxed">
+                            Kya aap sach mein is order ko cancel karna chahte hain? Cancel hone ke baad is action ko undo nahi kiya ja sakta.
+                        </p>
+
+                        {orderToCancel.paymentStatus === 'COMPLETED' && (
+                            <div className="mt-4 p-3 rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[11px] text-[#FCF6BA]">
+                                Prepaid order ke liye refund aapke original payment method par 5–7 business days mein process ho jayega.
+                            </div>
+                        )}
+
+                        <div className="flex items-center justify-end gap-3 mt-6">
+                            <button
+                                type="button"
+                                disabled={Boolean(cancellingOrderId)}
+                                onClick={() => setOrderToCancel(null)}
+                                className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest bg-white/5 hover:bg-white/10 border border-white/15 text-gray-300 rounded-sm cursor-pointer disabled:opacity-40"
+                            >
+                                Keep Order
+                            </button>
+                            <button
+                                type="button"
+                                disabled={Boolean(cancellingOrderId)}
+                                onClick={handleConfirmCancelOrder}
+                                className="px-5 py-2.5 text-[10px] font-black uppercase tracking-widest bg-red-600 hover:bg-red-500 text-white rounded-sm shadow-[0_0_20px_rgba(239,68,68,0.3)] cursor-pointer disabled:opacity-40"
+                            >
+                                {cancellingOrderId ? 'Cancelling...' : 'Yes, Cancel Order'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* ================================================================= */}
             {/* 3D LUXURY UPI CHECKOUT MODAL (Address + PhonePe QR + 5-Min Timer) */}

@@ -1,11 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../../services/axiosInstance';
+import { logoutUser } from '../auth/authSlice';
 
 // 1. Fetch Cart from DB
 export const fetchCart = createAsyncThunk('cart/fetchCart', async (_, { rejectWithValue }) => {
     try {
         const response = await axiosInstance.get('/cart');
-        return response.data.data; 
+        return response.data.data;
     } catch (error) {
         return rejectWithValue(error.response?.data?.message || 'Failed to fetch cart');
     }
@@ -47,12 +48,22 @@ const calculateTotalQuantity = (items) => {
     return items.reduce((total, item) => total + (item.quantity || 0), 0);
 };
 
+// Shared reset helper (Logout ke liye)
+const resetCartState = (state) => {
+    state.cart = { items: [] };
+    state.totalQuantity = 0;
+    state.appliedCoupon = null;
+    state.discountAmount = 0;
+    state.loading = false;
+    state.error = null;
+};
+
 // 5. Coupon Code Apply
 export const applyCouponCode = createAsyncThunk('cart/applyCoupon', async (code, { rejectWithValue }) => {
     try {
-        const response = await axiosInstance.post('/cart/apply-coupon', { code });
-        // Backend se originalTotal, discountAmount, finalTotal aayega
-        return { code: code.toUpperCase(), ...response.data.data }; 
+        const normalizedCode = String(code || '').trim().toUpperCase();
+        const response = await axiosInstance.post('/cart/apply-coupon', { code: normalizedCode });
+        return { code: normalizedCode, ...(response.data?.data || {}) };
     } catch (error) {
         return rejectWithValue(error.response?.data?.message || 'Invalid coupon code');
     }
@@ -69,15 +80,9 @@ const cartSlice = createSlice({
         error: null,
     },
     reducers: {
-        // FIX 1: Logout ya Order Place hone par coupon bhi clear hoga
         clearCartOnLogout: (state) => {
-            state.cart = { items: [] };
-            state.totalQuantity = 0;
-            state.appliedCoupon = null;
-            state.discountAmount = 0;
-            state.error = null;
+            resetCartState(state);
         },
-        // Optional manual coupon remove action
         removeCoupon: (state) => {
             state.appliedCoupon = null;
             state.discountAmount = 0;
@@ -87,26 +92,39 @@ const cartSlice = createSlice({
         const handleSuccess = (state, action) => {
             state.cart = action.payload || { items: [] };
             state.totalQuantity = calculateTotalQuantity(state.cart.items);
+            // Checkout ke baad cart khali hone par purana coupon bhi clear karo
+            if (state.totalQuantity === 0) {
+                state.appliedCoupon = null;
+                state.discountAmount = 0;
+            }
             state.loading = false;
+            state.error = null;
         };
 
-        // FIX 2: Jab cart items add/update/delete hon, toh coupon reset karein taaki galat discount na lage
+        // Jab cart items add/update/delete hon, toh coupon reset karein taaki galat discount na lage
         const handleCartChangeSuccess = (state, action) => {
             state.cart = action.payload || { items: [] };
             state.totalQuantity = calculateTotalQuantity(state.cart.items);
             state.appliedCoupon = null;
             state.discountAmount = 0;
             state.loading = false;
+            state.error = null;
         };
 
-        const handlePending = (state) => { state.loading = true; state.error = null; };
-        const handleReject = (state, action) => { state.loading = false; state.error = action.payload; };
+        const handlePending = (state) => {
+            state.loading = true;
+            state.error = null;
+        };
+        const handleReject = (state, action) => {
+            state.loading = false;
+            state.error = action.payload;
+        };
 
         builder
             .addCase(fetchCart.pending, handlePending)
             .addCase(fetchCart.fulfilled, handleSuccess)
             .addCase(fetchCart.rejected, handleReject)
-            
+
             .addCase(addToCart.pending, handlePending)
             .addCase(addToCart.fulfilled, handleCartChangeSuccess)
             .addCase(addToCart.rejected, handleReject)
@@ -119,22 +137,27 @@ const cartSlice = createSlice({
             .addCase(removeCartItem.fulfilled, handleCartChangeSuccess)
             .addCase(removeCartItem.rejected, handleReject)
 
-            .addCase(applyCouponCode.pending, (state) => { 
-                state.loading = true; 
-                state.error = null; 
+            .addCase(applyCouponCode.pending, (state) => {
+                state.loading = true;
+                state.error = null;
             })
-            // 3: Seedha action.payload se discountAmount aur code uthaya (bina extra .data ke)
             .addCase(applyCouponCode.fulfilled, (state, action) => {
                 state.loading = false;
-                state.discountAmount = action.payload.discountAmount || 0;
-                state.appliedCoupon = action.payload.code || action.meta.arg.toUpperCase();
+                state.error = null;
+                state.discountAmount = action.payload?.discountAmount || 0;
+                state.appliedCoupon =
+                    action.payload?.code || String(action.meta.arg || '').trim().toUpperCase();
             })
             .addCase(applyCouponCode.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
                 state.appliedCoupon = null;
                 state.discountAmount = 0;
-            });
+            })
+
+            // LOGOUT AUTO-CLEANUP (Sirf browser Redux memory aur badge reset karega, DB safe rahega)
+            .addCase(logoutUser.fulfilled, resetCartState)
+            .addCase(logoutUser.rejected, resetCartState);
     }
 });
 

@@ -61,9 +61,14 @@ const getStatusSelectStyle = (status) => {
 const AdminOrders = () => {
     const dispatch = useDispatch();
     const { allOrders, loading } = useSelector((state) => state.order);
+    const { user } = useSelector((state) => state.auth);
     const [updatingId, setUpdatingId] = useState(null);
 
+    const userData = user?.user || user?.data || user;
+    const isAdmin = userData?.role?.toLowerCase() === 'admin';
+
     useEffect(() => {
+        if (!isAdmin) return;
         dispatch(fetchAllOrders());
 
         // LIVE SOCKET.IO MAGIC FOR ADMIN DASHBOARD
@@ -92,7 +97,7 @@ const AdminOrders = () => {
         return () => {
             socket.disconnect();
         };
-    }, [dispatch]);
+    }, [dispatch, isAdmin]);
 
     const safeOrders = Array.isArray(allOrders) ? allOrders : [];
 

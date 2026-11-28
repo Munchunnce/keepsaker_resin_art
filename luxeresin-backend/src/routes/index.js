@@ -54,7 +54,8 @@ router.post('/payment/verify', auth, paymentController.verifyPayment);
 
 // --- Order Routes ---
 router.post('/order/checkout', auth, orderController.placeOrder);
-router.get('/order/my-orders', auth, orderController.myOrders);           
+router.get('/order/my-orders', auth, orderController.myOrders);
+router.put('/order/cancel/:id', auth, orderController.cancelOrder); // Customer can cancel their order 
 router.get('/order/all', auth, admin, orderController.allOrders);         
 router.put('/order/:id/status', auth, admin, orderController.updateStatus); 
 

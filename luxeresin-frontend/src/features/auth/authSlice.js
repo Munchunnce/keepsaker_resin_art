@@ -5,7 +5,7 @@ import axiosInstance, { clearAccessToken } from '../../services/axiosInstance';
 export const verifyAuthStatus = createAsyncThunk('auth/verify', async (_, { rejectWithValue }) => {
     try {
         const response = await axiosInstance.get('/me');
-        return response.data; // Backend se jo aaya
+        return response.data;
     } catch (error) {
         return rejectWithValue(error.response?.data?.message || 'Verification failed');
     }
@@ -14,11 +14,13 @@ export const verifyAuthStatus = createAsyncThunk('auth/verify', async (_, { reje
 // 2. THE ZOMBIE KILLER: Asli Logout jo Backend Cookie ko destroy karega
 export const logoutUser = createAsyncThunk('auth/logout', async (_, { rejectWithValue }) => {
     try {
-        await axiosInstance.post('/logout'); // Backend ko bolo HttpOnly Cookie khatam kare!
-        clearAccessToken(); // Memory RAM saaf karo
+        await axiosInstance.post('/logout');
         return true;
     } catch (error) {
         return rejectWithValue(error.response?.data?.message || 'Logout failed');
+    } finally {
+        // Token expired ya network error hone par bhi local RAM token pakka saaf ho
+        clearAccessToken();
     }
 });
 
@@ -39,9 +41,10 @@ const authSlice = createSlice({
                 state.loading = true;
             })
             .addCase(verifyAuthStatus.fulfilled, (state, action) => {
-                state.isAuthenticated = true;
-                // Backend ka data jahan bhi chhupa ho, usko nikal kar set karo!
-                state.user = action.payload.user || action.payload.data || action.payload; 
+                const extractedUser =
+                    action.payload?.user || action.payload?.data || action.payload || null;
+                state.isAuthenticated = Boolean(extractedUser);
+                state.user = extractedUser;
                 state.loading = false;
             })
             .addCase(verifyAuthStatus.rejected, (state) => {
@@ -49,10 +52,16 @@ const authSlice = createSlice({
                 state.user = null;
                 state.loading = false;
             })
-            // LOGOUT CASES
+            // LOGOUT CASES (Success ya Error dono mein session cleanly khatam karo)
             .addCase(logoutUser.fulfilled, (state) => {
                 state.isAuthenticated = false;
-                state.user = null; // Data completely khatam
+                state.user = null;
+                state.loading = false;
+            })
+            .addCase(logoutUser.rejected, (state) => {
+                state.isAuthenticated = false;
+                state.user = null;
+                state.loading = false;
             });
     }
 });

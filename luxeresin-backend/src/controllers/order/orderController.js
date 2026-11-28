@@ -286,6 +286,88 @@ const orderController = {
         } catch (err) {
             return next(err);
         }
+    },
+
+    // 5. CANCEL ORDER (Customer Action — Sirf PLACED ya PROCESSING mein allowed)
+    async cancelOrder(req, res, next) {
+        try {
+            const { id } = req.params;
+
+            const order = await Order.findById(id);
+            if (!order) {
+                return next(CustomErrorHandler.notFound('Order not found!'));
+            }
+
+            // SECURITY: Customer sirf apna hi order cancel kar sakta hai
+            if (order.user.toString() !== req.user._id.toString()) {
+                return next(CustomErrorHandler.unAuthorized('You are not authorized to cancel this order.'));
+            }
+
+            if (order.orderStatus === 'CANCELLED') {
+                return next(CustomErrorHandler.badRequest('This order is already cancelled.'));
+            }
+
+            if (!['PLACED', 'PROCESSING'].includes(order.orderStatus)) {
+                return next(
+                    CustomErrorHandler.badRequest(
+                        `Order cannot be cancelled after it is ${order.orderStatus.toLowerCase()}.`
+                    )
+                );
+            }
+
+            order.orderStatus = 'CANCELLED';
+
+            // Unpaid/COD -> FAILED | Prepaid (COMPLETED) -> COMPLETED hi rahega taaki Admin refund track kar sake
+            if (order.paymentStatus === 'PENDING') {
+                order.paymentStatus = 'FAILED';
+            }
+
+            await order.save();
+
+            const updatedOrder = await Order.findById(order._id).populate('user', 'full_name name email');
+
+            // LIVE SOCKET: AdminOrders aur Customer dono par turant CANCELLED sync hoga
+            const io = req.app.get('io');
+            if (io) {
+                io.emit('order-status-updated', updatedOrder);
+                io.emit('order-cancelled-by-customer', updatedOrder);
+            }
+
+            // Admin Email Alert (Non-blocking)
+            const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_MAIL;
+            if (adminEmail) {
+                try {
+                    await sendEmail({
+                        email: adminEmail,
+                        subject: `ORDER CANCELLED - #${updatedOrder._id.toString().slice(-6).toUpperCase()}`,
+                        message: `
+                            <div style="font-family: Arial, sans-serif; padding: 20px; border: 2px dashed #ef4444;">
+                                <h2 style="color: #ef4444;">Order Cancelled by Customer ⚠️</h2>
+                                <p><strong>Order ID:</strong> ${updatedOrder._id}</p>
+                                <p><strong>Customer:</strong> ${updatedOrder.shippingAddress?.fullName} (${updatedOrder.shippingAddress?.phone})</p>
+                                <p><strong>Order Value:</strong> ₹${updatedOrder.finalTotal}</p>
+                                <p><strong>Payment:</strong> ${updatedOrder.paymentMethod} (${updatedOrder.paymentStatus})</p>
+                                ${
+                                    updatedOrder.paymentStatus === 'COMPLETED'
+                                        ? '<p style="color: #d97706;"><strong>Action Needed:</strong> This was a prepaid Razorpay order. Please process refund.</p>'
+                                        : ''
+                                }
+                            </div>
+                        `
+                    });
+                } catch (emailErr) {
+                    console.error('Admin cancel email failed:', emailErr);
+                }
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: 'Order cancelled successfully.',
+                data: updatedOrder
+            });
+        } catch (err) {
+            return next(err);
+        }
     }
 };
 
