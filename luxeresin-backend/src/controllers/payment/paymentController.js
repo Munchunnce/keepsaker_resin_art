@@ -114,6 +114,7 @@ const paymentController = {
                 {
                     paymentStatus: 'COMPLETED',
                     orderStatus: 'PROCESSING',
+                    transactionId: razorpay_payment_id,
                     utrNumber: razorpay_payment_id
                 },
                 { new: true }
